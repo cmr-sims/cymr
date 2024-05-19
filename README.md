@@ -22,7 +22,7 @@ pip install cymr
 To get the development version:
 
 ```bash
-pip install git+https://github.com/mortonne/cymr
+pip install git+https://github.com/cmr-sims/cymr
 ```
 
 To install for development, clone the repository and run: 
