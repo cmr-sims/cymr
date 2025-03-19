@@ -1,6 +1,6 @@
 [project]
 name = "cymr"
-version = "0.12.1"
+version = "0.12.2"
 authors = [
     {name = "Neal W Morton", email = "mortonne@gmail.com"},
     {name = "Sean M. Polyn", email = "sean.polyn@vanderbilt.edu"},
