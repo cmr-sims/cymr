@@ -1,6 +1,6 @@
 """Simulate free recall experiments."""
 
-from pkg_resources import resource_filename
+from importlib import resources
 from abc import ABC, abstractmethod
 import numpy as np
 from scipy import optimize
@@ -13,8 +13,9 @@ from cymr import parameters
 
 def sample_data(study):
     """Read sample data."""
-    data_file = resource_filename('cymr', f'data/{study}.csv')
-    df = pd.read_csv(data_file)
+    ref = resources.files("datascipsych").joinpath(f"data/{study}.csv")
+    with resources.as_file(ref) as data_file:
+        df = pd.read_csv(data_file)
     return df
 
 
