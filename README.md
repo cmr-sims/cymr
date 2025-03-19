@@ -1,7 +1,7 @@
 # cymr
 [![PyPI version](https://badge.fury.io/py/cymr.svg)](https://badge.fury.io/py/cymr)
 [![Documentation Status](https://readthedocs.org/projects/cymr/badge/?version=latest)](https://cymr.readthedocs.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/mortonne/cymr/branch/master/graph/badge.svg)](https://codecov.io/gh/mortonne/cymr)
+[![codecov](https://codecov.io/gh/cmr-sims/cymr/branch/master/graph/badge.svg)](https://codecov.io/gh/cmr-sims/cymr)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4557123.svg)](https://doi.org/10.5281/zenodo.4557123)
 
 Package for fitting and simulating free recall data. Includes a fast 
@@ -10,6 +10,8 @@ using Cython.
 
 See the [website](https://cymr.readthedocs.io/en/latest/) for full
 documentation.
+
+See [here](https://github.com/mortonne/cymr/releases) for release notes for version 0.12.1 and earlier.
 
 ## Installation
 
