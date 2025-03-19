@@ -13,7 +13,7 @@ from cymr import parameters
 
 def sample_data(study):
     """Read sample data."""
-    ref = resources.files("datascipsych").joinpath(f"data/{study}.csv")
+    ref = resources.files("cymr").joinpath(f"data/{study}.csv")
     with resources.as_file(ref) as data_file:
         df = pd.read_csv(data_file)
     return df
