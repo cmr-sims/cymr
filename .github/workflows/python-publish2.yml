@@ -6,6 +6,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Build and publish to PyPI
+    environment: pypi
     permissions:
       id-token: write
     steps:
