@@ -645,13 +645,15 @@ def get_list_items(item_index, study, recall, list_ind, scope):
         item_pool = study['item_index'][list_ind]
         item_study = study['input'][list_ind]
         item_recall = recall['input'][list_ind]
+        item_distract = np.arange(len(item_study) + 1)
     elif scope == 'pool':
         item_pool = item_index
         item_study = study['item_index'][list_ind]
         item_recall = recall['item_index'][list_ind]
+        item_distract = np.arange(len(item_study) + 1)
     else:
         raise ValueError(f'Invalid scope: {scope}')
-    return item_pool, item_study, item_recall
+    return item_pool, item_study, item_recall, item_distract
 
 
 class CMR(Recall):
@@ -766,7 +768,7 @@ class CMR(Recall):
             list_param = param_def.get_dynamic(list_param, i)
 
             # simulate study
-            item_pool, item_study, item_recall = get_list_items(
+            item_pool, item_study, item_recall, item_distract = get_list_items(
                 item_index, study, recall, i, param_def.options['scope']
             )
             net = study_list(param_def, list_param, item_pool, item_study, patterns)
@@ -811,7 +813,7 @@ class CMR(Recall):
             list_param = param_def.get_dynamic(list_param, i)
 
             # simulate study
-            item_pool, item_study, item_recall = get_list_items(
+            item_pool, item_study, item_recall, item_distract = get_list_items(
                 item_index, study, recall, i, param_def.options['scope']
             )
             net = study_list(param_def, list_param, item_pool, item_study, patterns)
