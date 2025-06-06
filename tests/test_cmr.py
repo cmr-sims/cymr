@@ -190,6 +190,20 @@ def test_init_network(patterns):
     np.testing.assert_allclose(net.w_ff_pre, expected, atol=0.0001)
 
 
+def test_init_network_distract():
+    """Test initialization of a network with distraction units."""
+    param_def = cmr.CMRParameters()
+    param_def.set_options(distraction=True)
+    param_def.set_sublayers(f=['task'], c=['loc'])
+    param_def.set_weights('fc', {(('task', 'item'), ('loc', 'item')): 'loc'})
+    param_def.set_weights('cf', {(('task', 'item'), ('loc', 'item')): 'loc'})
+    item_index = np.arange(3)
+    param = {}
+    patterns = {'vector': {'loc': np.eye(3)}}
+    net = cmr.init_network(param_def, patterns, param, item_index)
+    np.testing.assert_array_equal(net.w_fc_pre, np.eye(8))
+
+
 @pytest.fixture()
 def param_def_dist(param):
     """Generate parameter definitions for a simple CMR-D network."""

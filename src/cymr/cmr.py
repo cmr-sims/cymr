@@ -507,6 +507,15 @@ def init_network(param_def, patterns, param, item_index, remove_blank=False):
             weights['fc'][region] = np.array([[1]])
             weights['cf'][region] = np.array([[1]])
 
+    if param_def.options.get('distraction', False):
+        # add distraction units
+        n_distract = len(item_index) + 1
+        for f_sublayer in param_def.sublayers['f']:
+            for c_sublayer in param_def.sublayers['c']:
+                region = ((f_sublayer, 'distract'), (c_sublayer, 'distract'))
+                weights['fc'][region] = np.eye(n_distract)
+                weights['cf'][region] = np.eye(n_distract)
+
     # get all segment definitions
     f_segments = {}
     c_segments = {}
