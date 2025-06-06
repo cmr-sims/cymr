@@ -693,6 +693,16 @@ class CMR(Recall):
 
     B_enc : float
         Integration rate during encoding.
+    
+    B_distract : float
+        Integration rate of distraction units before each item 
+        presentation. Only used if the "distraction" option is set
+        to True.
+    
+    B_retention : float
+        Integration rate of distraction units after the last
+        item presentation. Only used if the "distraction" option is set
+        to True.
 
     B_start : float
         Integration rate of start context reinstatement.
