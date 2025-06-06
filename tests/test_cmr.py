@@ -243,6 +243,23 @@ def test_dist_cmr(data, patterns, param_def_dist, param_dist):
     np.testing.assert_allclose(stats['logl'].sum(), -5.936799964636842)
 
 
+def test_dist_cmr_distract(data, patterns, param_def_dist, param_dist):
+    """Test CMR-D with distraction."""
+    model = cmr.CMR()
+    param_def = param_def_dist.copy()
+    param_def.set_options(distraction=True)
+    param = param_dist.copy()
+    param['B_distract'] = 0
+    param['B_retention'] = 0
+    stats = model.likelihood(data, param, None, param_def, patterns=patterns)
+    np.testing.assert_allclose(stats['logl'].sum(), -5.936799964636842)
+
+    param['B_distract'] = 0.2
+    param['B_retention'] = 0.2
+    stats = model.likelihood(data, param, None, param_def, patterns=patterns)
+    np.testing.assert_allclose(stats['logl'].sum(), -5.933655795592753)
+
+
 def test_dist_cmr_fit(data, patterns, param_def_dist):
     """Test fitted parameter values for CMR-D."""
     param_def = param_def_dist.copy()
@@ -293,6 +310,28 @@ def test_dist_cmr_record(data, patterns, param_def_dist, param_dist):
     )
     np.testing.assert_allclose(states[5].f, np.array([1.0, 0.0, 0.0, 0.0]))
     np.testing.assert_allclose(states[5].f_in, np.array([0.0, 0.0, 0.0, 0.0]))
+
+
+def test_dist_cmr_distract_record(data, patterns, param_def_dist, param_dist):
+    model = cmr.CMR()
+    param_def = param_def_dist.copy()
+    param_def.set_options(distraction=True)
+    param = param_dist.copy()
+    param['B_distract'] = 0.2
+    param['B_retention'] = 0.4
+    states = model.record(data, param, None, param_def, patterns=patterns)
+
+    np.testing.assert_allclose(
+        states[0].c, np.array([0.5, 0, 0, 0, 0, 0, 0.84852814, 0.17320508, 0, 0, 0])
+    )
+    np.testing.assert_allclose(
+        states[1].c, 
+        np.array([0.42426407, 0.5, 0, 0, 0, 0, 0.72, 0.14696938, 0.17320508, 0, 0])
+    )
+    np.testing.assert_allclose(
+        states[2].c, 
+        np.array([0.36, 0.42426407, 0.5, 0, 0, 0, 0.61094026, 0.12470766, 0.14696938, 0.17320508, 0])
+    )
 
 
 def test_dist_cmr_record_trim(data, patterns, param_def_dist, param_dist):
