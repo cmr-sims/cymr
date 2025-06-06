@@ -509,7 +509,7 @@ def init_network(param_def, patterns, param, item_index, remove_blank=False):
             weights['fc'][region] = np.array([[1]])
             weights['cf'][region] = np.array([[1]])
 
-    if param_def.options.get('distraction', False):
+    if param_def.options['distraction']:
         # add distraction units
         n_distract = len(item_index) + 1
         for f_sublayer in param_def.sublayers['f']:
@@ -576,7 +576,7 @@ def study_list(param_def, param, item_index, item_input, patterns, item_distract
     """
     net = init_network(param_def, patterns, param, item_index)
     net.update(('task', 'start', 0), net.c_sublayers)
-    if param_def.options.get('distraction', False):
+    if param_def.options['distraction']:
         net.study_distract(
             ('task', 'item'),
             item_input,
@@ -909,7 +909,7 @@ class CMR(Recall):
             item_pool, item_study, item_recall, item_distract = get_list_items(
                 item_index, study, recall, i, param_def.options['scope']
             )
-            if param_def.options.get('distraction', False):
+            if param_def.options['distraction']:
                 distract_segment = ('task', 'distract')
                 distract_B = param['B_distract']
                 retention_B = param['B_retention']
