@@ -44,15 +44,16 @@ def expand_param(param, size):
     return param
 
 
-def prepare_study_param(n_item, n_sub, B, Lfc, Lcf, distract_B=None):
+def prepare_study_param(n_item, n_sub, B, Lfc, Lcf, distract_B=None, retention_B=None):
     """Prepare parameters for simulating a study phase."""
     B = expand_param(B, (n_item, n_sub))
     Lfc = expand_param(Lfc, (n_item, n_sub))
     Lcf = expand_param(Lcf, (n_item, n_sub))
     param = {'B': B, 'Lfc': Lfc, 'Lcf': Lcf, 'distract_B': None}
     if distract_B is not None:
-        distract_B = expand_param(distract_B, (n_item + 1, n_sub))
-        param['distract_B'] = distract_B
+        distract_B = expand_param(distract_B, (n_item, n_sub))
+        retention_B = expand_param(retention_B, (1, n_sub))
+        param['distract_B'] = np.concat([distract_B, retention_B], 0)
     return param
 
 
@@ -704,6 +705,7 @@ class Network(object):
         distract_segment,
         distract_list,
         distract_B,
+        retention_B,
     ):
         """
         Study a list of items.
@@ -738,14 +740,18 @@ class Network(object):
 
         distract_B : float or numpy.array
             Context updating rate for each distraction event before
-            and after each study event. If an array, must be of length
+            each study event. If an array, must be of length
             n_items + 1. Distraction will not be presented on trials i
             where distract_B[i] is zero.
+        
+        retention_B : float
+            Context updating rate for distraction after the last study
+            event.
         """
         if not isinstance(sublayers, list):
             sublayers = [sublayers]
         param = prepare_study_param(
-            item_list.shape[0], len(sublayers), B, Lfc, Lcf, distract_B
+            item_list.shape[0], len(sublayers), B, Lfc, Lcf, distract_B, retention_B
         )
 
         # get unit indices
