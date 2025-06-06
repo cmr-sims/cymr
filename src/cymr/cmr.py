@@ -174,7 +174,9 @@ class CMRParameters(Parameters):
 
     def __init__(self) -> None:
         super().__init__()
-        self.options: dict[str, Any] = {}
+        self.options: dict[str, Any] = {
+            'distraction': False, 'scope': 'list', 'filter_recalls': False
+        }
         self.fixed: dict[str, float] = {}
         self.free: dict[str, Iterable[float]] = {}
         self.dependent: dict[str, str] = {}
@@ -771,14 +773,7 @@ class CMR(Recall):
         )
         return study, recall
 
-    def set_default_options(self, param_def):
-        if 'scope' not in param_def.options:
-            param_def.set_options(scope='list')
-        if 'filter_recalls' not in param_def.options:
-            param_def.set_options(filter_recalls=False)
-
     def likelihood_subject(self, study, recall, param, param_def=None, patterns=None):
-        self.set_default_options(param_def)
         n_item = len(study['input'][0])
         n_list = len(study['input'])
         if param_def is None:
@@ -826,7 +821,6 @@ class CMR(Recall):
     def generate_subject(
         self, study, recall, param, param_def=None, patterns=None, **kwargs
     ):
-        self.set_default_options(param_def)
         n_item = len(study['input'][0])
         n_list = len(study['input'])
         if param_def is None:
@@ -886,7 +880,6 @@ class CMR(Recall):
         include=None,
         exclude=None,
     ):
-        self.set_default_options(param_def)
         n_item = len(study['input'][0])
         n_list = len(study['input'])
         if param_def is None:
