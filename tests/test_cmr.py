@@ -355,13 +355,24 @@ def test_dynamic_cmr(data, patterns, param_def_dist, param_dist):
     """Test evaluation of a dynamic study parameter."""
     param = param_dist.copy()
     param_def = param_def_dist.copy()
-    param['B_distract'] = 0.2
-    param_def.set_dynamic('study', B_enc='distract * B_distract')
+    param['slope_distract'] = 0.2
+    param_def.set_dynamic(
+        'study', 
+        B_distract='distract * slope_distract', 
+        B_retention='retention * slope_distract',
+    )
+    param_def.set_options(distraction=True)
+    
     model = cmr.CMR()
     stats = model.likelihood(
-        data, param, None, param_def, patterns=patterns, study_keys=['distract']
+        data, 
+        param, 
+        None, 
+        param_def, 
+        patterns=patterns, 
+        study_keys=['distract', 'retention'],
     )
-    np.testing.assert_allclose(stats['logl'].sum(), -5.9899248839454415)
+    np.testing.assert_allclose(stats['logl'].sum(), -5.945280418642251)
 
 
 def test_dynamic_cmr_recall(data, patterns, param_def_dist, param_dist):
