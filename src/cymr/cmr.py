@@ -855,6 +855,7 @@ class CMR(Recall):
         include=None,
         exclude=None,
     ):
+        self.set_default_options(param_def)
         n_item = len(study['input'][0])
         n_list = len(study['input'])
         if param_def is None:
@@ -864,6 +865,7 @@ class CMR(Recall):
 
         study_state = []
         recall_state = []
+        item_index = np.arange(len(patterns['items']))
         for i in range(n_list):
             # access the dynamic parameters needed for this list
             list_param = param.copy()
@@ -880,10 +882,12 @@ class CMR(Recall):
             net.update(('task', 'start', 0), net.c_sublayers)
 
             # record study phase
-            item_list = study['input'][i].astype(int)
+            item_pool, item_study, item_recall, item_distract = get_list_items(
+                item_index, study, recall, i, param_def.options['scope']
+            )
             list_study_state = net.record_study(
                 ('task', 'item'),
-                item_list,
+                item_study,
                 net.c_sublayers,
                 param['B_enc'],
                 list_param['Lfc'],
