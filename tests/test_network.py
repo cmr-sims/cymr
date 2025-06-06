@@ -72,6 +72,7 @@ def net_study_distract():
     Lfc = 1
     Lcf = 2
     distract_B = 0.1
+    retention_B = 0.1
     n_item = net.f_segment['task']['item']
     n_distract = net.f_segment['task']['distract']
     item_list = np.arange(n_item)
@@ -86,6 +87,7 @@ def net_study_distract():
         ('task', 'distract'),
         distract_list,
         distract_B,
+        retention_B,
     )
     return net
 

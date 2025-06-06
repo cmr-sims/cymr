@@ -778,7 +778,19 @@ class Network(object):
         )
 
     def record_study(
-        self, segment, item_list, sublayers, B, Lfc, Lcf, include=None, exclude=None
+        self, 
+        segment, 
+        item_list, 
+        sublayers, 
+        B, 
+        Lfc, 
+        Lcf, 
+        distract_segment=None, 
+        distract_list=None, 
+        distract_B=0, 
+        retention_B=0, 
+        include=None, 
+        exclude=None,
     ):
         """
         Study a list of items and record network states.
@@ -805,6 +817,22 @@ class Network(object):
         Lcf : float or numpy.array
             Learning rate for context to item associations.
 
+        distract_segment : str, str
+            Sublayer and segment representing distraction trials.
+
+        distract_list : numpy.array
+            Distraction item indices relative to the segment.
+
+        distract_B : float or numpy.array
+            Context updating rate for each distraction event before
+            each study event. If an array, must be of length
+            n_items + 1. Distraction will not be presented on trials i
+            where distract_B[i] is zero.
+        
+        retention_B : float
+            Context updating rate for distraction after the last study
+            event.
+
         include : list of str, optional
             Network attributes to include in the recorded states.
             Default is to include all attributes.
@@ -817,16 +845,31 @@ class Network(object):
         state : list of cymr.network.Network
             Copy of the network state after presentation of each item.
         """
+        if distract_segment is not None and distract_list is not None:
+            distraction = True
+        else:
+            distraction = False
+        
         if not isinstance(sublayers, list):
             sublayers = [sublayers]
-        param = prepare_study_param(item_list.shape[0], len(sublayers), B, Lfc, Lcf)
+        param = prepare_study_param(
+            item_list.shape[0], len(sublayers), B, Lfc, Lcf, distract_B, retention_B
+        )
         state = []
         for i in range(len(item_list)):
+            if distraction:
+                item = (*distract_segment, distract_list[i])
+                self.integrate(item, sublayers, param['distract_B'][i])
+
             item = (*segment, item_list[i])
             self.present(
                 item, sublayers, param['B'][i], param['Lfc'][i], param['Lcf'][i]
             )
             state.append(self.copy(include=include, exclude=exclude))
+        
+        if distraction:
+            item = (*distract_segment, distract_list[-1])
+            self.integrate(item, sublayers, param['distract_B'][-1])
         return state
 
     def record_recall(

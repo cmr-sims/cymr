@@ -377,14 +377,20 @@ def test_sublayer_study(data, patterns, param_def_sublayer, param_dist):
     study, recall = fit.prepare_lists(
         data, study_keys=['input', 'item_index'], recall_keys=['input'], clean=True
     )
+    item_index = np.arange(len(patterns['items']))
+    i = 0
+    item_pool, item_study, item_recall, item_distract = cmr.get_list_items(
+        item_index, study, recall, i, 'list'
+    )
 
     # study the first list
     net = cmr.study_list(
         param_def_sublayer,
         list_param,
-        study['item_index'][0],
-        study['input'][0],
+        item_pool,
+        item_study,
         patterns,
+        item_distract,
     )
     expected = np.array(
         [

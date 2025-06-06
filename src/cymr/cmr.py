@@ -543,7 +543,7 @@ def init_network(param_def, patterns, param, item_index, remove_blank=False):
     return net
 
 
-def study_list(param_def, param, item_index, item_input, patterns):
+def study_list(param_def, param, item_index, item_input, patterns, item_distract):
     """
     Simulate study of a list.
 
@@ -563,6 +563,9 @@ def study_list(param_def, param, item_index, item_input, patterns):
 
     patterns : dict
         Item pattern vectors.
+    
+    item_distract : numpy.array
+        Indices of distraction items.
 
     Returns
     -------
@@ -571,14 +574,28 @@ def study_list(param_def, param, item_index, item_input, patterns):
     """
     net = init_network(param_def, patterns, param, item_index)
     net.update(('task', 'start', 0), net.c_sublayers)
-    net.study(
-        ('task', 'item'),
-        item_input,
-        net.c_sublayers,
-        param['B_enc'],
-        param['Lfc'],
-        param['Lcf'],
-    )
+    if param_def.options.get('distraction', False):
+        net.study_distract(
+            ('task', 'item'),
+            item_input,
+            net.c_sublayers,
+            param['B_enc'],
+            param['Lfc'],
+            param['Lcf'],
+            ('task', 'distract'),
+            item_distract,
+            param['B_distract'],
+            param['B_retention'],
+        )
+    else:
+        net.study(
+            ('task', 'item'),
+            item_input,
+            net.c_sublayers,
+            param['B_enc'],
+            param['Lfc'],
+            param['Lcf'],
+        )
     net.integrate(('task', 'start', 0), net.c_sublayers, param['B_start'])
     return net
 
@@ -771,7 +788,9 @@ class CMR(Recall):
             item_pool, item_study, item_recall, item_distract = get_list_items(
                 item_index, study, recall, i, param_def.options['scope']
             )
-            net = study_list(param_def, list_param, item_pool, item_study, patterns)
+            net = study_list(
+                param_def, list_param, item_pool, item_study, patterns, item_distract
+            )
 
             # get recall probabilities
             p = net.p_recall(
@@ -816,7 +835,9 @@ class CMR(Recall):
             item_pool, item_study, item_recall, item_distract = get_list_items(
                 item_index, study, recall, i, param_def.options['scope']
             )
-            net = study_list(param_def, list_param, item_pool, item_study, patterns)
+            net = study_list(
+                param_def, list_param, item_pool, item_study, patterns, item_distract
+            )
 
             # simulate recall
             if param_def.options['filter_recalls']:
@@ -885,6 +906,15 @@ class CMR(Recall):
             item_pool, item_study, item_recall, item_distract = get_list_items(
                 item_index, study, recall, i, param_def.options['scope']
             )
+            if param_def.options.get('distraction', False):
+                distract_segment = ('task', 'distract')
+                distract_B = param['B_distract']
+                retention_B = param['B_retention']
+            else:
+                distract_segment = None
+                distract_B = None
+                retention_B = None
+
             list_study_state = net.record_study(
                 ('task', 'item'),
                 item_study,
@@ -892,6 +922,10 @@ class CMR(Recall):
                 param['B_enc'],
                 list_param['Lfc'],
                 list_param['Lcf'],
+                distract_segment=distract_segment,
+                distract_list=item_distract,
+                distract_B=distract_B,
+                retention_B=retention_B,
                 include=include,
                 exclude=exclude,
             )
