@@ -17,7 +17,8 @@ def param_def():
     param.set_fixed(a=1, b=2)
     param.set_fixed({'c': 3})
     param.set_dependent(d='2 + mean([a, b])')
-    param.set_dynamic('study', e='distract / c')
+    param.set_dynamic('study', 'item', e='distract / c')
+    param.set_dynamic('study', 'list', f='clip(input, 0, 1)')
     param.set_free(f=[0, 1])
     return param
 
@@ -27,7 +28,10 @@ def test_param(param_def):
     assert param_def.fixed == {'a': 1, 'b': 2, 'c': 3}
     assert param_def.free == {'f': [0, 1]}
     assert param_def.dependent == {'d': '2 + mean([a, b])'}
-    assert param_def.dynamic == {'study': {'e': 'distract / c'}}
+    assert param_def.dynamic == {
+        'study': {'e': 'distract / c', 'f': 'clip(input, 0, 1)'}, 
+        'scope': {'e': 'item', 'f': 'list'},
+    }
 
 
 @pytest.fixture()

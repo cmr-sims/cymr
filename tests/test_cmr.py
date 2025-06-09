@@ -358,6 +358,7 @@ def test_dynamic_cmr(data, patterns, param_def_dist, param_dist):
     param['slope_distract'] = 0.2
     param_def.set_dynamic(
         'study', 
+        'item',
         B_distract='distract * slope_distract', 
         B_retention='retention * slope_distract',
     )
@@ -380,7 +381,7 @@ def test_dynamic_cmr_recall(data, patterns, param_def_dist, param_dist):
     param = param_dist.copy()
     param_def = param_def_dist.copy()
     param['B_op'] = 0.2
-    param_def.set_dynamic('recall', B_rec='op * B_op')
+    param_def.set_dynamic('recall', 'item', B_rec='op * B_op')
     model = cmr.CMR()
     stats = model.likelihood(
         data, param, None, param_def, patterns=patterns, recall_keys=['op']
