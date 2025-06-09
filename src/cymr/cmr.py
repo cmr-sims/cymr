@@ -779,7 +779,6 @@ class CMR(Recall):
         if param_def is None:
             raise ValueError('Must provide a Parameters object.')
         n_sub = len(param_def.sublayers['c'])
-        param = prepare_list_param(n_item, n_sub, param, param_def)
 
         item_index = np.arange(len(patterns['items']))
         logl = 0
@@ -788,6 +787,8 @@ class CMR(Recall):
             # access the dynamic parameters needed for this list
             list_param = param.copy()
             list_param = param_def.get_dynamic(list_param, i)
+            list_param = param_def.eval_dependent(list_param)
+            list_param = prepare_list_param(n_item, n_sub, list_param, param_def)
 
             # simulate study
             item_pool, item_study, item_recall, item_distract = get_list_items(
@@ -826,7 +827,6 @@ class CMR(Recall):
         if param_def is None:
             raise ValueError('Must provide a Parameters object.')
         n_sub = len(param_def.sublayers['c'])
-        param = prepare_list_param(n_item, n_sub, param, param_def)
 
         item_index = np.arange(len(patterns['items']))
         recalls_list = []
@@ -834,6 +834,8 @@ class CMR(Recall):
             # access the dynamic parameters needed for this list
             list_param = param.copy()
             list_param = param_def.get_dynamic(list_param, i)
+            list_param = param_def.eval_dependent(list_param)
+            list_param = prepare_list_param(n_item, n_sub, list_param, param_def)
 
             # simulate study
             item_pool, item_study, item_recall, item_distract = get_list_items(
@@ -885,7 +887,6 @@ class CMR(Recall):
         if param_def is None:
             raise ValueError('Must provide a Parameters object.')
         n_sub = len(param_def.sublayers['c'])
-        param = prepare_list_param(n_item, n_sub, param, param_def)
 
         study_state = []
         recall_state = []
@@ -894,6 +895,8 @@ class CMR(Recall):
             # access the dynamic parameters needed for this list
             list_param = param.copy()
             list_param = param_def.get_dynamic(list_param, i)
+            list_param = param_def.eval_dependent(list_param)
+            list_param = prepare_list_param(n_item, n_sub, list_param, param_def)
 
             # initialize the network
             net = init_network(
