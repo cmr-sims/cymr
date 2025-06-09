@@ -92,6 +92,20 @@ def net_study_distract():
     return net
 
 
+def test_expand_param():
+    # scalar
+    p = network.expand_param(1, (4, 2))
+    np.testing.assert_array_equal(p, np.ones((4, 2)))
+
+    # trials array
+    p = network.expand_param(np.ones(4), (4, 2))
+    np.testing.assert_array_equal(p, np.ones((4, 2)))
+
+    # trials x sublayers array
+    p = network.expand_param(np.ones((4, 2)), (4, 2))
+    np.testing.assert_array_equal(p, np.ones((4, 2)))
+
+
 def test_copy(net_pre):
     net2 = net_pre.copy()
     np.testing.assert_array_equal(net_pre.w_fc_pre, net2.w_fc_pre)
