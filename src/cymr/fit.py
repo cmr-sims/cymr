@@ -482,10 +482,10 @@ class Recall(ABC):
         param = param_def.fixed.copy()
         param.update(dict(zip(var_names, res['x'])))
         param = param_def.eval_dependent(param)
-        param = param_def.eval_dynamic(param, study, recall)
+        param_dynamic = param_def.eval_dynamic(param, study, recall)
 
         # evaluate fitted parameters, get number of fitted points
-        logl, n = self.likelihood_subject(study, recall, param, param_def, patterns)
+        logl, n = self.likelihood_subject(study, recall, param_dynamic, param_def, patterns)
         k = len(param_def.free)
         assert logl == -res['fun']
         return param, logl, n, k
