@@ -53,7 +53,7 @@ def prepare_study_param(n_item, n_sub, B, Lfc, Lcf, distract_B=None, retention_B
         distract_B = expand_param(distract_B, (n_item, n_sub))
         if isinstance(retention_B, np.ndarray) and retention_B.shape[0] > 1:
             # if there is a value for each item, use the last one
-            retention_B = retention_B[-1]
+            retention_B = retention_B[[-1]]
         retention_B = expand_param(retention_B, (1, n_sub))
         param['distract_B'] = np.concat([distract_B, retention_B], 0)
     return param
