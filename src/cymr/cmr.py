@@ -907,7 +907,7 @@ class CMR(Recall):
             net = init_network(
                 param_def,
                 patterns,
-                param,
+                list_param,
                 study['item_index'][i],
                 remove_blank=remove_blank,
             )
@@ -919,8 +919,8 @@ class CMR(Recall):
             )
             if param_def.options['distraction']:
                 distract_segment = ('task', 'distract')
-                distract_B = param['B_distract']
-                retention_B = param['B_retention']
+                distract_B = list_param['B_distract']
+                retention_B = list_param['B_retention']
             else:
                 distract_segment = None
                 distract_B = None
@@ -930,7 +930,7 @@ class CMR(Recall):
                 ('task', 'item'),
                 item_study,
                 net.c_sublayers,
-                param['B_enc'],
+                list_param['B_enc'],
                 list_param['Lfc'],
                 list_param['Lcf'],
                 distract_segment=distract_segment,
@@ -940,15 +940,15 @@ class CMR(Recall):
                 include=include,
                 exclude=exclude,
             )
-            net.integrate(('task', 'start', 0), net.c_sublayers, param['B_start'])
+            net.integrate(('task', 'start', 0), net.c_sublayers, list_param['B_start'])
 
             # record recall phase
             list_recall_state = net.record_recall(
                 ('task', 'item'),
                 recall['input'][i],
                 net.c_sublayers,
-                param['B_rec'],
-                param['T'],
+                list_param['B_rec'],
+                list_param['T'],
                 include=include,
                 exclude=exclude,
             )
