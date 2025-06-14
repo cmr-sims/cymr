@@ -368,7 +368,12 @@ class CMRParameters(Parameters):
 
         # prepare parameter arrays
         for par, values in param_lists.items():
-            if n_trial is not None:
+            if any([isinstance(v, np.ndarray) for v in values]):
+                size = (max([v.size for v in values if isinstance(v, np.ndarray)]),)
+                eval_param[par] = np.asarray(
+                    [network.expand_param(v, size) for v in values]
+                ).T
+            elif n_trial is not None:
                 eval_param[par] = np.tile(np.asarray(values), (n_trial, 1))
             else:
                 eval_param[par] = np.array(values)
