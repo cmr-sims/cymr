@@ -184,7 +184,7 @@ class CMRParameters(Parameters):
         self.sublayers: dict[str, list[str]] = {}
         self.weights: dict[str, dict[Region, str]] = {}
         self.sublayer_param: dict[str, dict[str, dict[str, str]]] = {}
-        self._fields.extend(['sublayers', 'weights', 'sublayer_param'])
+        self._fields.extend(['options', 'sublayers', 'weights', 'sublayer_param'])
 
     def to_json(self, json_file: str) -> None:
         """
