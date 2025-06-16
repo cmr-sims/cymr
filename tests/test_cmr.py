@@ -190,6 +190,20 @@ def test_init_network(patterns):
     np.testing.assert_allclose(net.w_ff_pre, expected, atol=0.0001)
 
 
+def test_init_network_distract():
+    """Test initialization of a network with distraction units."""
+    param_def = cmr.CMRParameters()
+    param_def.set_options(distraction=True)
+    param_def.set_sublayers(f=['task'], c=['loc'])
+    param_def.set_weights('fc', {(('task', 'item'), ('loc', 'item')): 'loc'})
+    param_def.set_weights('cf', {(('task', 'item'), ('loc', 'item')): 'loc'})
+    item_index = np.arange(3)
+    param = {}
+    patterns = {'vector': {'loc': np.eye(3)}}
+    net = cmr.init_network(param_def, patterns, param, item_index)
+    np.testing.assert_array_equal(net.w_fc_pre, np.eye(8))
+
+
 @pytest.fixture()
 def param_def_dist(param):
     """Generate parameter definitions for a simple CMR-D network."""
@@ -227,6 +241,23 @@ def test_dist_cmr(data, patterns, param_def_dist, param_dist):
         data, param_dist, None, param_def_dist, patterns=patterns
     )
     np.testing.assert_allclose(stats['logl'].sum(), -5.936799964636842)
+
+
+def test_dist_cmr_distract(data, patterns, param_def_dist, param_dist):
+    """Test CMR-D with distraction."""
+    model = cmr.CMR()
+    param_def = param_def_dist.copy()
+    param_def.set_options(distraction=True)
+    param = param_dist.copy()
+    param['B_distract'] = 0
+    param['B_retention'] = 0
+    stats = model.likelihood(data, param, None, param_def, patterns=patterns)
+    np.testing.assert_allclose(stats['logl'].sum(), -5.936799964636842)
+
+    param['B_distract'] = 0.2
+    param['B_retention'] = 0.2
+    stats = model.likelihood(data, param, None, param_def, patterns=patterns)
+    np.testing.assert_allclose(stats['logl'].sum(), -5.933655795592753)
 
 
 def test_dist_cmr_fit(data, patterns, param_def_dist):
@@ -281,6 +312,28 @@ def test_dist_cmr_record(data, patterns, param_def_dist, param_dist):
     np.testing.assert_allclose(states[5].f_in, np.array([0.0, 0.0, 0.0, 0.0]))
 
 
+def test_dist_cmr_distract_record(data, patterns, param_def_dist, param_dist):
+    model = cmr.CMR()
+    param_def = param_def_dist.copy()
+    param_def.set_options(distraction=True)
+    param = param_dist.copy()
+    param['B_distract'] = 0.2
+    param['B_retention'] = 0.4
+    states = model.record(data, param, None, param_def, patterns=patterns)
+
+    np.testing.assert_allclose(
+        states[0].c, np.array([0.5, 0, 0, 0, 0, 0, 0.84852814, 0.17320508, 0, 0, 0])
+    )
+    np.testing.assert_allclose(
+        states[1].c, 
+        np.array([0.42426407, 0.5, 0, 0, 0, 0, 0.72, 0.14696938, 0.17320508, 0, 0])
+    )
+    np.testing.assert_allclose(
+        states[2].c, 
+        np.array([0.36, 0.42426407, 0.5, 0, 0, 0, 0.61094026, 0.12470766, 0.14696938, 0.17320508, 0])
+    )
+
+
 def test_dist_cmr_record_trim(data, patterns, param_def_dist, param_dist):
     model = cmr.CMR()
     states = model.record(
@@ -302,13 +355,25 @@ def test_dynamic_cmr(data, patterns, param_def_dist, param_dist):
     """Test evaluation of a dynamic study parameter."""
     param = param_dist.copy()
     param_def = param_def_dist.copy()
-    param['B_distract'] = 0.2
-    param_def.set_dynamic('study', B_enc='distract * B_distract')
+    param['slope_distract'] = 0.2
+    param_def.set_dynamic(
+        'study', 
+        'item',
+        B_distract='distract * slope_distract', 
+        B_retention='retention * slope_distract',
+    )
+    param_def.set_options(distraction=True)
+    
     model = cmr.CMR()
     stats = model.likelihood(
-        data, param, None, param_def, patterns=patterns, study_keys=['distract']
+        data, 
+        param, 
+        None, 
+        param_def, 
+        patterns=patterns, 
+        study_keys=['distract', 'retention'],
     )
-    np.testing.assert_allclose(stats['logl'].sum(), -5.9899248839454415)
+    np.testing.assert_allclose(stats['logl'].sum(), -5.945280418642251)
 
 
 def test_dynamic_cmr_recall(data, patterns, param_def_dist, param_dist):
@@ -316,7 +381,7 @@ def test_dynamic_cmr_recall(data, patterns, param_def_dist, param_dist):
     param = param_dist.copy()
     param_def = param_def_dist.copy()
     param['B_op'] = 0.2
-    param_def.set_dynamic('recall', B_rec='op * B_op')
+    param_def.set_dynamic('recall', 'item', B_rec='op * B_op')
     model = cmr.CMR()
     stats = model.likelihood(
         data, param, None, param_def, patterns=patterns, recall_keys=['op']
@@ -363,14 +428,20 @@ def test_sublayer_study(data, patterns, param_def_sublayer, param_dist):
     study, recall = fit.prepare_lists(
         data, study_keys=['input', 'item_index'], recall_keys=['input'], clean=True
     )
+    item_index = np.arange(len(patterns['items']))
+    i = 0
+    item_pool, item_study, item_recall, item_distract = cmr.get_list_items(
+        item_index, study, recall, i, 'list'
+    )
 
     # study the first list
     net = cmr.study_list(
         param_def_sublayer,
         list_param,
-        study['item_index'][0],
-        study['input'][0],
+        item_pool,
+        item_study,
         patterns,
+        item_distract,
     )
     expected = np.array(
         [

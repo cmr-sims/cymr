@@ -402,7 +402,14 @@ class Recall(ABC):
         return results
 
     def fit_subject(
-        self, subject_data, param_def, patterns=None, method='de', **kwargs
+        self, 
+        subject_data, 
+        param_def, 
+        patterns=None, 
+        study_keys=None, 
+        recall_keys=None, 
+        method='de', 
+        **kwargs,
     ):
         """
         Fit a model to data for one subject.
@@ -417,6 +424,12 @@ class Recall(ABC):
 
         patterns : dict of (str: dict of (str: numpy.array)), optional
             Patterns to use in the model.
+
+        study_keys : list of str
+            Fields to include in study data.
+
+        recall_keys : list of str
+            Fields to include in recall data.
 
         method : str, optional
             Search method for fitting the parameters.
@@ -439,7 +452,7 @@ class Recall(ABC):
         k : int
             Number of free parameters.
         """
-        study, recall = self.prepare_sim(subject_data)
+        study, recall = self.prepare_sim(subject_data, study_keys, recall_keys)
         var_names = list(param_def.free.keys())
 
         def eval_fit(x):
@@ -469,21 +482,29 @@ class Recall(ABC):
         param = param_def.fixed.copy()
         param.update(dict(zip(var_names, res['x'])))
         param = param_def.eval_dependent(param)
-        param = param_def.eval_dynamic(param, study, recall)
+        param_dynamic = param_def.eval_dynamic(param, study, recall)
 
         # evaluate fitted parameters, get number of fitted points
-        logl, n = self.likelihood_subject(study, recall, param, param_def, patterns)
+        logl, n = self.likelihood_subject(study, recall, param_dynamic, param_def, patterns)
         k = len(param_def.free)
         assert logl == -res['fun']
         return param, logl, n, k
 
     def _run_fit_subject(
-        self, data, subject, param_def, patterns=None, method='de', **kwargs
+        self, 
+        data, 
+        subject, 
+        param_def, 
+        patterns=None, 
+        study_keys=None, 
+        recall_keys=None, 
+        method='de', 
+        **kwargs,
     ):
         """Apply fitting to one subject."""
         subject_data = data.loc[data['subject'] == subject]
         param, logl, n, k = self.fit_subject(
-            subject_data, param_def, patterns, method, **kwargs
+            subject_data, param_def, patterns, study_keys, recall_keys, method, **kwargs
         )
         results = {**param, 'logl': logl, 'n': n, 'k': k}
         return results
@@ -493,6 +514,8 @@ class Recall(ABC):
         data,
         param_def,
         patterns=None,
+        study_keys=None,
+        recall_keys=None,
         n_jobs=None,
         method='de',
         n_rep=1,
@@ -511,6 +534,12 @@ class Recall(ABC):
 
         patterns : dict of (str: dict of (str: numpy.array)), optional
             Patterns to use in the model.
+
+        study_keys : list of str
+            Fields to include in study data.
+
+        recall_keys : list of str
+            Fields to include in recall data.
 
         n_jobs : int, optional
             Number of processes to use for fitting subjects in
@@ -537,7 +566,14 @@ class Recall(ABC):
         full_reps = np.tile(np.arange(n_rep), len(subjects))
         full_results = Parallel(n_jobs=n_jobs)(
             delayed(self._run_fit_subject)(
-                data, subject, param_def, patterns, method, **kwargs
+                data, 
+                subject, 
+                param_def, 
+                patterns, 
+                study_keys, 
+                recall_keys, 
+                method, 
+                **kwargs,
             )
             for subject in full_subjects
         )

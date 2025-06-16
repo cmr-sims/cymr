@@ -72,6 +72,7 @@ def net_study_distract():
     Lfc = 1
     Lcf = 2
     distract_B = 0.1
+    retention_B = 0.1
     n_item = net.f_segment['task']['item']
     n_distract = net.f_segment['task']['distract']
     item_list = np.arange(n_item)
@@ -86,8 +87,23 @@ def net_study_distract():
         ('task', 'distract'),
         distract_list,
         distract_B,
+        retention_B,
     )
     return net
+
+
+def test_expand_param():
+    # scalar
+    p = network.expand_param(1, (4, 2))
+    np.testing.assert_array_equal(p, np.ones((4, 2)))
+
+    # trials array
+    p = network.expand_param(np.ones(4), (4, 2))
+    np.testing.assert_array_equal(p, np.ones((4, 2)))
+
+    # trials x sublayers array
+    p = network.expand_param(np.ones((4, 2)), (4, 2))
+    np.testing.assert_array_equal(p, np.ones((4, 2)))
 
 
 def test_copy(net_pre):

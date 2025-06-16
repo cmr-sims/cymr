@@ -30,11 +30,10 @@ def expand_param(param, size):
         param = np.tile(param, size).astype(float)
     elif size.shape and param.ndim < len(size):
         # expand array to have to correct number of dimensions
-        axis = tuple(size[param.ndim :])
-        param = np.expand_dims(param, axis)
+        param = np.expand_dims(param, axis=1)
         if param.shape != tuple(size):
             # expand singleton dimensions as needed
-            rep = np.ones(size.shape)
+            rep = np.ones(size.shape, dtype=int)
             for i, n in enumerate(param.shape):
                 if n == 1:
                     rep[i] = size[i]
@@ -44,15 +43,19 @@ def expand_param(param, size):
     return param
 
 
-def prepare_study_param(n_item, n_sub, B, Lfc, Lcf, distract_B=None):
+def prepare_study_param(n_item, n_sub, B, Lfc, Lcf, distract_B=None, retention_B=None):
     """Prepare parameters for simulating a study phase."""
     B = expand_param(B, (n_item, n_sub))
     Lfc = expand_param(Lfc, (n_item, n_sub))
     Lcf = expand_param(Lcf, (n_item, n_sub))
     param = {'B': B, 'Lfc': Lfc, 'Lcf': Lcf, 'distract_B': None}
     if distract_B is not None:
-        distract_B = expand_param(distract_B, (n_item + 1, n_sub))
-        param['distract_B'] = distract_B
+        distract_B = expand_param(distract_B, (n_item, n_sub))
+        if isinstance(retention_B, np.ndarray) and retention_B.shape[0] > 1:
+            # if there is a value for each item, use the last one
+            retention_B = retention_B[[-1]]
+        retention_B = expand_param(retention_B, (1, n_sub))
+        param['distract_B'] = np.concat([distract_B, retention_B], 0)
     return param
 
 
@@ -704,6 +707,7 @@ class Network(object):
         distract_segment,
         distract_list,
         distract_B,
+        retention_B,
     ):
         """
         Study a list of items.
@@ -738,14 +742,18 @@ class Network(object):
 
         distract_B : float or numpy.array
             Context updating rate for each distraction event before
-            and after each study event. If an array, must be of length
+            each study event. If an array, must be of length
             n_items + 1. Distraction will not be presented on trials i
             where distract_B[i] is zero.
+        
+        retention_B : float
+            Context updating rate for distraction after the last study
+            event.
         """
         if not isinstance(sublayers, list):
             sublayers = [sublayers]
         param = prepare_study_param(
-            item_list.shape[0], len(sublayers), B, Lfc, Lcf, distract_B
+            item_list.shape[0], len(sublayers), B, Lfc, Lcf, distract_B, retention_B
         )
 
         # get unit indices
@@ -772,7 +780,19 @@ class Network(object):
         )
 
     def record_study(
-        self, segment, item_list, sublayers, B, Lfc, Lcf, include=None, exclude=None
+        self, 
+        segment, 
+        item_list, 
+        sublayers, 
+        B, 
+        Lfc, 
+        Lcf, 
+        distract_segment=None, 
+        distract_list=None, 
+        distract_B=0, 
+        retention_B=0, 
+        include=None, 
+        exclude=None,
     ):
         """
         Study a list of items and record network states.
@@ -799,6 +819,22 @@ class Network(object):
         Lcf : float or numpy.array
             Learning rate for context to item associations.
 
+        distract_segment : str, str
+            Sublayer and segment representing distraction trials.
+
+        distract_list : numpy.array
+            Distraction item indices relative to the segment.
+
+        distract_B : float or numpy.array
+            Context updating rate for each distraction event before
+            each study event. If an array, must be of length
+            n_items + 1. Distraction will not be presented on trials i
+            where distract_B[i] is zero.
+        
+        retention_B : float
+            Context updating rate for distraction after the last study
+            event.
+
         include : list of str, optional
             Network attributes to include in the recorded states.
             Default is to include all attributes.
@@ -811,16 +847,31 @@ class Network(object):
         state : list of cymr.network.Network
             Copy of the network state after presentation of each item.
         """
+        if distract_segment is not None and distract_list is not None:
+            distraction = True
+        else:
+            distraction = False
+        
         if not isinstance(sublayers, list):
             sublayers = [sublayers]
-        param = prepare_study_param(item_list.shape[0], len(sublayers), B, Lfc, Lcf)
+        param = prepare_study_param(
+            item_list.shape[0], len(sublayers), B, Lfc, Lcf, distract_B, retention_B
+        )
         state = []
         for i in range(len(item_list)):
+            if distraction:
+                item = (*distract_segment, distract_list[i])
+                self.integrate(item, sublayers, param['distract_B'][i])
+
             item = (*segment, item_list[i])
             self.present(
                 item, sublayers, param['B'][i], param['Lfc'][i], param['Lcf'][i]
             )
             state.append(self.copy(include=include, exclude=exclude))
+        
+        if distraction:
+            item = (*distract_segment, distract_list[-1])
+            self.integrate(item, sublayers, param['distract_B'][-1])
         return state
 
     def record_recall(

@@ -35,7 +35,7 @@ def param_def():
     param = cmr.CMRParameters()
 
     # options
-    param.set_options(scope='list')
+    param.set_options(scope='pool')
 
     # network definition
     param.set_sublayers(f=['task'], c=['loc', 'cat'])
@@ -55,7 +55,7 @@ def param_def():
 
 def test_param(param_def):
     """Test that parameter definitions are correct."""
-    assert param_def.options == {'scope': 'list'}
+    assert param_def.options['scope'] == 'pool'
     assert param_def.sublayers == {'f': ['task'], 'c': ['loc', 'cat']}
     assert param_def.weights['fc'] == {
         (('task', 'item'), ('loc', 'item')): 'loc',

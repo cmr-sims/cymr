@@ -21,7 +21,12 @@ def read_json(json_file: str) -> Parameters:
     par.set_fixed(par_dict['fixed'])
     par.set_dependent(par_dict['dependent'])
     for trial_type, p in par_dict['dynamic'].items():
-        par.set_dynamic(trial_type, p)
+        for name, val in p.items():
+            if 'scope' in par_dict['dynamic'] and name in par_dict['dynamic']['scope']:
+                scope = par_dict['dynamic']['scope'][name]
+            else:
+                scope = 'item'
+            par.set_dynamic(trial_type, scope, {name: val})
     return par
 
 
@@ -56,6 +61,7 @@ def set_dynamic(
     param: dict[str, float],
     list_data: dict[str, list[ArrayLike]],
     dynamic: dict[str, str],
+    scope: dict[str, str] = None,
 ) -> dict[str, Union[float, list[ArrayLike]]]:
     """
     Set dynamic parameters for one trial type.
@@ -73,6 +79,9 @@ def set_dynamic(
         will be evaluated with both param keys and data keys available
         as variables. If a key exists on both param and data, the param
         value takes precedence.
+    
+    scope : dict of (str: str)
+        Scope of parameters. If "list", the unique value will be taken.
 
     Returns
     -------
@@ -96,6 +105,13 @@ def set_dynamic(
         for data in data_list:
             # restrict eval functions to the numpy namespace
             val = eval(expression, np.__dict__, data)
+            if scope is not None and key in scope and scope[key] == 'list':
+                uval = np.unique(val)
+                if len(uval) > 1:
+                    raise ValueError(
+                        f'Expression for "{key}", "{expression}", evaluated to multiple values.'
+                    )
+                val = float(uval[0])
             updated[key].append(val)
     return updated
 
@@ -266,7 +282,7 @@ class Parameters(object):
         return set_dependent(param, self.dependent)
 
     def set_dynamic(
-        self, trial_type: str, *args: dict[str, str], **kwargs: str
+        self, trial_type: str, scope: str, *args: dict[str, str], **kwargs: str
     ) -> None:
         """
         Set dynamic parameters in terms of parameters and data.
@@ -275,6 +291,10 @@ class Parameters(object):
         ----------
         trial_type : str
             Type of trial that the parameter will vary over.
+        
+        scope : str
+            Scope that the parameter applies to. May be "item" or 
+            "list".
 
         Examples
         --------
@@ -283,12 +303,16 @@ class Parameters(object):
         >>> param_def.set_dynamic('study', a='b * input')
         >>> param_def.set_dynamic('recall', {'c': 'd * op'})
         """
+        call_dict = dict(*args, **kwargs)
         if trial_type in self.dynamic:
             self.dynamic[trial_type].update(*args, **kwargs)
         else:
             self.dynamic[trial_type] = dict(*args, **kwargs)
-        for key in self.dynamic[trial_type].keys():
+        if 'scope' not in self.dynamic:
+            self.dynamic['scope'] = {}
+        for key in call_dict.keys():
             self._dynamic_names.add(key)
+            self.dynamic['scope'][key] = scope
 
     def eval_dynamic(
         self,
@@ -325,9 +349,13 @@ class Parameters(object):
         {'b': 0.2, 'a': [array([0.2, 0.4, 0.6])]}
         """
         if 'study' in self.dynamic and study is not None:
-            param = set_dynamic(param, study, self.dynamic['study'])
+            param = set_dynamic(
+                param, study, self.dynamic['study'], self.dynamic['scope']
+            )
         if 'recall' in self.dynamic and recall is not None:
-            param = set_dynamic(param, recall, self.dynamic['recall'])
+            param = set_dynamic(
+                param, recall, self.dynamic['recall'], self.dynamic['scope']
+            )
         return param
 
     def get_dynamic(

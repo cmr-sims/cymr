@@ -123,7 +123,12 @@ def read_config(json_file):
     par.set_fixed(par_dict['fixed'])
     par.set_dependent(par_dict['dependent'])
     for trial_type, p in par_dict['dynamic'].items():
-        par.set_dynamic(trial_type, p)
+        for name, val in p.items():
+            if 'scope' in par_dict['dynamic'] and name in par_dict['dynamic']['scope']:
+                scope = par_dict['dynamic']['scope'][name]
+            else:
+                scope = 'item'
+            par.set_dynamic(trial_type, scope, {name: val})
     par.set_sublayers(par_dict['sublayers'])
     for connect, p in par_dict['weights'].items():
         weight_dict = {decode_region(region): expr for region, expr in p.items()}
@@ -174,7 +179,9 @@ class CMRParameters(Parameters):
 
     def __init__(self) -> None:
         super().__init__()
-        self.options: dict[str, Any] = {}
+        self.options: dict[str, Any] = {
+            'distraction': False, 'scope': 'list', 'filter_recalls': False
+        }
         self.fixed: dict[str, float] = {}
         self.free: dict[str, Iterable[float]] = {}
         self.dependent: dict[str, str] = {}
@@ -182,7 +189,7 @@ class CMRParameters(Parameters):
         self.sublayers: dict[str, list[str]] = {}
         self.weights: dict[str, dict[Region, str]] = {}
         self.sublayer_param: dict[str, dict[str, dict[str, str]]] = {}
-        self._fields.extend(['sublayers', 'weights', 'sublayer_param'])
+        self._fields.extend(['options', 'sublayers', 'weights', 'sublayer_param'])
 
     def to_json(self, json_file: str) -> None:
         """
@@ -366,7 +373,12 @@ class CMRParameters(Parameters):
 
         # prepare parameter arrays
         for par, values in param_lists.items():
-            if n_trial is not None:
+            if any([isinstance(v, np.ndarray) for v in values]):
+                size = (max([v.size for v in values if isinstance(v, np.ndarray)]),)
+                eval_param[par] = np.asarray(
+                    [network.expand_param(v, size) for v in values]
+                ).T
+            elif n_trial is not None:
                 eval_param[par] = np.tile(np.asarray(values), (n_trial, 1))
             else:
                 eval_param[par] = np.array(values)
@@ -507,6 +519,15 @@ def init_network(param_def, patterns, param, item_index, remove_blank=False):
             weights['fc'][region] = np.array([[1]])
             weights['cf'][region] = np.array([[1]])
 
+    if param_def.options['distraction']:
+        # add distraction units
+        n_distract = len(item_index) + 1
+        for f_sublayer in param_def.sublayers['f']:
+            for c_sublayer in param_def.sublayers['c']:
+                region = ((f_sublayer, 'distract'), (c_sublayer, 'distract'))
+                weights['fc'][region] = np.eye(n_distract)
+                weights['cf'][region] = np.eye(n_distract)
+
     # get all segment definitions
     f_segments = {}
     c_segments = {}
@@ -534,7 +555,7 @@ def init_network(param_def, patterns, param, item_index, remove_blank=False):
     return net
 
 
-def study_list(param_def, param, item_index, item_input, patterns):
+def study_list(param_def, param, item_index, item_input, patterns, item_distract):
     """
     Simulate study of a list.
 
@@ -554,6 +575,9 @@ def study_list(param_def, param, item_index, item_input, patterns):
 
     patterns : dict
         Item pattern vectors.
+    
+    item_distract : numpy.array
+        Indices of distraction items.
 
     Returns
     -------
@@ -562,14 +586,28 @@ def study_list(param_def, param, item_index, item_input, patterns):
     """
     net = init_network(param_def, patterns, param, item_index)
     net.update(('task', 'start', 0), net.c_sublayers)
-    net.study(
-        ('task', 'item'),
-        item_input,
-        net.c_sublayers,
-        param['B_enc'],
-        param['Lfc'],
-        param['Lcf'],
-    )
+    if param_def.options['distraction']:
+        net.study_distract(
+            ('task', 'item'),
+            item_input,
+            net.c_sublayers,
+            param['B_enc'],
+            param['Lfc'],
+            param['Lcf'],
+            ('task', 'distract'),
+            item_distract,
+            param['B_distract'],
+            param['B_retention'],
+        )
+    else:
+        net.study(
+            ('task', 'item'),
+            item_input,
+            net.c_sublayers,
+            param['B_enc'],
+            param['Lfc'],
+            param['Lcf'],
+        )
     net.integrate(('task', 'start', 0), net.c_sublayers, param['B_start'])
     return net
 
@@ -636,13 +674,15 @@ def get_list_items(item_index, study, recall, list_ind, scope):
         item_pool = study['item_index'][list_ind]
         item_study = study['input'][list_ind]
         item_recall = recall['input'][list_ind]
+        item_distract = np.arange(len(item_study) + 1)
     elif scope == 'pool':
         item_pool = item_index
         item_study = study['item_index'][list_ind]
         item_recall = recall['item_index'][list_ind]
+        item_distract = np.arange(len(item_study) + 1)
     else:
         raise ValueError(f'Invalid scope: {scope}')
-    return item_pool, item_study, item_recall
+    return item_pool, item_study, item_recall, item_distract
 
 
 class CMR(Recall):
@@ -665,6 +705,16 @@ class CMR(Recall):
 
     B_enc : float
         Integration rate during encoding.
+    
+    B_distract : float
+        Integration rate of distraction units before each item 
+        presentation. Only used if the "distraction" option is set
+        to True.
+    
+    B_retention : float
+        Integration rate of distraction units after the last
+        item presentation. Only used if the "distraction" option is set
+        to True.
 
     B_start : float
         Integration rate of start context reinstatement.
@@ -733,20 +783,12 @@ class CMR(Recall):
         )
         return study, recall
 
-    def set_default_options(self, param_def):
-        if 'scope' not in param_def.options:
-            param_def.set_options(scope='list')
-        if 'filter_recalls' not in param_def.options:
-            param_def.set_options(filter_recalls=False)
-
     def likelihood_subject(self, study, recall, param, param_def=None, patterns=None):
-        self.set_default_options(param_def)
         n_item = len(study['input'][0])
         n_list = len(study['input'])
         if param_def is None:
             raise ValueError('Must provide a Parameters object.')
         n_sub = len(param_def.sublayers['c'])
-        param = prepare_list_param(n_item, n_sub, param, param_def)
 
         item_index = np.arange(len(patterns['items']))
         logl = 0
@@ -755,12 +797,16 @@ class CMR(Recall):
             # access the dynamic parameters needed for this list
             list_param = param.copy()
             list_param = param_def.get_dynamic(list_param, i)
+            list_param = param_def.eval_dependent(list_param)
+            list_param = prepare_list_param(n_item, n_sub, list_param, param_def)
 
             # simulate study
-            item_pool, item_study, item_recall = get_list_items(
+            item_pool, item_study, item_recall, item_distract = get_list_items(
                 item_index, study, recall, i, param_def.options['scope']
             )
-            net = study_list(param_def, list_param, item_pool, item_study, patterns)
+            net = study_list(
+                param_def, list_param, item_pool, item_study, patterns, item_distract
+            )
 
             # get recall probabilities
             p = net.p_recall(
@@ -786,13 +832,11 @@ class CMR(Recall):
     def generate_subject(
         self, study, recall, param, param_def=None, patterns=None, **kwargs
     ):
-        self.set_default_options(param_def)
         n_item = len(study['input'][0])
         n_list = len(study['input'])
         if param_def is None:
             raise ValueError('Must provide a Parameters object.')
         n_sub = len(param_def.sublayers['c'])
-        param = prepare_list_param(n_item, n_sub, param, param_def)
 
         item_index = np.arange(len(patterns['items']))
         recalls_list = []
@@ -800,12 +844,16 @@ class CMR(Recall):
             # access the dynamic parameters needed for this list
             list_param = param.copy()
             list_param = param_def.get_dynamic(list_param, i)
+            list_param = param_def.eval_dependent(list_param)
+            list_param = prepare_list_param(n_item, n_sub, list_param, param_def)
 
             # simulate study
-            item_pool, item_study, item_recall = get_list_items(
+            item_pool, item_study, item_recall, item_distract = get_list_items(
                 item_index, study, recall, i, param_def.options['scope']
             )
-            net = study_list(param_def, list_param, item_pool, item_study, patterns)
+            net = study_list(
+                param_def, list_param, item_pool, item_study, patterns, item_distract
+            )
 
             # simulate recall
             if param_def.options['filter_recalls']:
@@ -849,46 +897,63 @@ class CMR(Recall):
         if param_def is None:
             raise ValueError('Must provide a Parameters object.')
         n_sub = len(param_def.sublayers['c'])
-        param = prepare_list_param(n_item, n_sub, param, param_def)
 
         study_state = []
         recall_state = []
+        item_index = np.arange(len(patterns['items']))
         for i in range(n_list):
             # access the dynamic parameters needed for this list
             list_param = param.copy()
             list_param = param_def.get_dynamic(list_param, i)
+            list_param = param_def.eval_dependent(list_param)
+            list_param = prepare_list_param(n_item, n_sub, list_param, param_def)
 
             # initialize the network
             net = init_network(
                 param_def,
                 patterns,
-                param,
+                list_param,
                 study['item_index'][i],
                 remove_blank=remove_blank,
             )
             net.update(('task', 'start', 0), net.c_sublayers)
 
             # record study phase
-            item_list = study['input'][i].astype(int)
+            item_pool, item_study, item_recall, item_distract = get_list_items(
+                item_index, study, recall, i, param_def.options['scope']
+            )
+            if param_def.options['distraction']:
+                distract_segment = ('task', 'distract')
+                distract_B = list_param['B_distract']
+                retention_B = list_param['B_retention']
+            else:
+                distract_segment = None
+                distract_B = None
+                retention_B = None
+
             list_study_state = net.record_study(
                 ('task', 'item'),
-                item_list,
+                item_study,
                 net.c_sublayers,
-                param['B_enc'],
+                list_param['B_enc'],
                 list_param['Lfc'],
                 list_param['Lcf'],
+                distract_segment=distract_segment,
+                distract_list=item_distract,
+                distract_B=distract_B,
+                retention_B=retention_B,
                 include=include,
                 exclude=exclude,
             )
-            net.integrate(('task', 'start', 0), net.c_sublayers, param['B_start'])
+            net.integrate(('task', 'start', 0), net.c_sublayers, list_param['B_start'])
 
             # record recall phase
             list_recall_state = net.record_recall(
                 ('task', 'item'),
                 recall['input'][i],
                 net.c_sublayers,
-                param['B_rec'],
-                param['T'],
+                list_param['B_rec'],
+                list_param['T'],
                 include=include,
                 exclude=exclude,
             )
