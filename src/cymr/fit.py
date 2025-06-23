@@ -451,6 +451,7 @@ class Recall(ABC):
         patterns=None, 
         study_keys=None, 
         recall_keys=None, 
+        stats_def=None, 
         method='de', 
         **kwargs,
     ):
@@ -473,6 +474,10 @@ class Recall(ABC):
 
         recall_keys : list of str
             Fields to include in recall data.
+
+        stats_def : cymr.statistics.Statistics
+            Statistics to use when evaluating the model fit. If None,
+            will evaluate based on likelihood.
 
         method : str, optional
             Search method for fitting the parameters.
@@ -497,18 +502,38 @@ class Recall(ABC):
         """
         study, recall = self.prepare_sim(subject_data, study_keys, recall_keys)
         var_names = list(param_def.free.keys())
+        if stats_def is not None:
+            # evaluate stats on data to fit
+            subject_merged = fr.merge_free_recall(subject_data)
+            stats_data, _ = stats_def.eval_stats(subject_merged)
 
         def eval_fit(x):
             eval_param = param_def.fixed.copy()
             eval_param.update(dict(zip(var_names, x)))
             eval_param = param_def.eval_dependent(eval_param)
             eval_param = param_def.eval_dynamic(eval_param, study, recall)
-            eval_logl, _ = self.likelihood_subject(
-                study, recall, eval_param, param_def, patterns
-            )
-            if np.isnan(eval_logl):
-                eval_logl = -10e6
-            return -eval_logl
+            
+            if stats_def is not None:
+                # generate data, calculate stats, compare to data stats
+                error_stat = self.eval_model_stats(
+                    subject_data, 
+                    study, 
+                    recall, 
+                    eval_param, 
+                    param_def, 
+                    patterns, 
+                    stats_def, 
+                    stats_data,
+                )
+            else:
+                # calculate log likelihood of recall sequences
+                eval_logl, _ = self.likelihood_subject(
+                    study, recall, eval_param, param_def, patterns
+                )
+                if np.isnan(eval_logl):
+                    eval_logl = -10e6
+                error_stat = -eval_logl
+            return error_stat
 
         group_lb = [param_def.free[k][0] for k in var_names]
         group_ub = [param_def.free[k][1] for k in var_names]
@@ -528,10 +553,26 @@ class Recall(ABC):
         param_dynamic = param_def.eval_dynamic(param, study, recall)
 
         # evaluate fitted parameters, get number of fitted points
-        logl, n = self.likelihood_subject(study, recall, param_dynamic, param_def, patterns)
+        if stats_def is not None:
+            fit_stat = self.eval_model_stats(
+                subject_data, 
+                study, 
+                recall, 
+                param_dynamic, 
+                param_def, 
+                patterns, 
+                stats_def, 
+                stats_data,
+            )
+            n = sum(len(r) + 1 for r in recall['input'])
+        else:
+            logl, n = self.likelihood_subject(
+                study, recall, param_dynamic, param_def, patterns
+            )
+            assert logl == -res['fun']
+            fit_stat = logl
         k = len(param_def.free)
-        assert logl == -res['fun']
-        return param, logl, n, k
+        return param, fit_stat, n, k
 
     def _run_fit_subject(
         self, 
@@ -541,15 +582,19 @@ class Recall(ABC):
         patterns=None, 
         study_keys=None, 
         recall_keys=None, 
+        stats_def=None, 
         method='de', 
         **kwargs,
     ):
         """Apply fitting to one subject."""
         subject_data = data.loc[data['subject'] == subject]
-        param, logl, n, k = self.fit_subject(
-            subject_data, param_def, patterns, study_keys, recall_keys, method, **kwargs
+        param, fit_stat, n, k = self.fit_subject(
+            subject_data, param_def, patterns, study_keys, recall_keys, stats_def, method, **kwargs
         )
-        results = {**param, 'logl': logl, 'n': n, 'k': k}
+        if stats_def is None:
+            results = {**param, 'logl': fit_stat, 'n': n, 'k': k}
+        else:
+            results = {**param, stats_def.error_stat: fit_stat, 'n': n, 'k': k}
         return results
 
     def fit_indiv(
@@ -559,6 +604,7 @@ class Recall(ABC):
         patterns=None,
         study_keys=None,
         recall_keys=None,
+        stats_def=None, 
         n_jobs=None,
         method='de',
         n_rep=1,
@@ -583,6 +629,10 @@ class Recall(ABC):
 
         recall_keys : list of str
             Fields to include in recall data.
+
+        stats_def : cymr.statistics.Statistics
+            Statistics to use when evaluating the model fit. If None,
+            will evaluate based on likelihood.
 
         n_jobs : int, optional
             Number of processes to use for fitting subjects in
