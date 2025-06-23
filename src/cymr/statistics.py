@@ -51,7 +51,7 @@ class Analysis(object):
                 f, *self.args, **self.kwargs, include_groups=False
             )
             res.index = res.index.droplevel(-1)
-            res = res.reset_index()
+            res = res.reset_index().convert_dtypes()
 
             if self.level == "group":
                 # average over subjects
@@ -78,7 +78,7 @@ class Analysis(object):
             subject = "n/a"
             independent_cols = self.independent
         else:
-            subject = res["subject"]
+            subject = res["subject"].astype(str)
             independent_cols = self.independent
 
         # get the dependent variable        
