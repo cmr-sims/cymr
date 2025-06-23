@@ -112,7 +112,13 @@ def test_cmr_fit_stat(data, param):
     stats_def.set_stat("spc", "psifr.fr:spc", ["input"], "recall", "group")
 
     results = model.fit_indiv(
-        data, param_def, patterns=patterns, stats_def=stats_def, n_jobs=2, tol=0.1
+        data, 
+        param_def, 
+        patterns=patterns, 
+        stats_def=stats_def, 
+        n_stats_rep=2, 
+        n_jobs=2, 
+        tol=0.1,
     )
     assert 'B_enc' in results
     assert 'rmsd' in results
