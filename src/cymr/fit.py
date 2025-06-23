@@ -483,6 +483,7 @@ class Recall(ABC):
         study_keys=None, 
         recall_keys=None, 
         stats_def=None, 
+        n_stats_rep=1,
         method='de', 
         **kwargs,
     ):
@@ -509,6 +510,10 @@ class Recall(ABC):
         stats_def : cymr.statistics.Statistics
             Statistics to use when evaluating the model fit. If None,
             will evaluate based on likelihood.
+        
+        n_stats_rep : int, optional
+            Number of times to replicate generation and stat 
+            evaluation.
 
         method : str, optional
             Search method for fitting the parameters.
@@ -555,6 +560,7 @@ class Recall(ABC):
                     patterns, 
                     stats_def, 
                     stats_data,
+                    n_stats_rep,
                 )
             else:
                 # calculate log likelihood of recall sequences
@@ -594,6 +600,7 @@ class Recall(ABC):
                 patterns, 
                 stats_def, 
                 stats_data,
+                n_stats_rep,
             )
             n = sum(len(r) + 1 for r in recall['input'])
         else:
@@ -614,13 +621,22 @@ class Recall(ABC):
         study_keys=None, 
         recall_keys=None, 
         stats_def=None, 
+        n_stats_rep=1,
         method='de', 
         **kwargs,
     ):
         """Apply fitting to one subject."""
         subject_data = data.loc[data['subject'] == subject]
         param, fit_stat, n, k = self.fit_subject(
-            subject_data, param_def, patterns, study_keys, recall_keys, stats_def, method, **kwargs
+            subject_data, 
+            param_def, 
+            patterns, 
+            study_keys, 
+            recall_keys, 
+            stats_def, 
+            n_stats_rep, 
+            method, 
+            **kwargs,
         )
         if stats_def is None:
             results = {**param, 'logl': fit_stat, 'n': n, 'k': k}
@@ -636,6 +652,7 @@ class Recall(ABC):
         study_keys=None,
         recall_keys=None,
         stats_def=None, 
+        n_stats_rep=1,
         n_jobs=None,
         method='de',
         n_rep=1,
@@ -664,6 +681,10 @@ class Recall(ABC):
         stats_def : cymr.statistics.Statistics
             Statistics to use when evaluating the model fit. If None,
             will evaluate based on likelihood.
+        
+        n_stats_rep : int, optional
+            Number of times to replicate generation and stat 
+            evaluation.
 
         n_jobs : int, optional
             Number of processes to use for fitting subjects in
@@ -698,6 +719,7 @@ class Recall(ABC):
                     study_keys, 
                     recall_keys, 
                     stats_def,
+                    n_stats_rep,
                     method, 
                     **kwargs,
                 )
@@ -713,6 +735,7 @@ class Recall(ABC):
                     study_keys, 
                     recall_keys, 
                     stats_def,
+                    n_stats_rep,
                     method, 
                     **kwargs,
                 )
