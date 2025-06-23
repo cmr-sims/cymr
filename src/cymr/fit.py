@@ -333,7 +333,16 @@ class Recall(ABC):
         pass
 
     def eval_model_stats(
-        self, data, study, recall, param, param_def, patterns, stats_def, stats_data
+        self, 
+        data, 
+        study, 
+        recall, 
+        param, 
+        param_def, 
+        patterns, 
+        stats_def, 
+        stats_data,
+        n_stats_rep=1,
     ):
         """
         Simulate data and evaluate fit to summary statistics.
@@ -365,13 +374,35 @@ class Recall(ABC):
         stats_data : pandas.DataFrame
             Summary statistics for the comparison data. Must have been
             evaluated using the same stat_def.
+        
+        n_stats_rep : int, optional
+            Number of times to replicate generation and stat 
+            evaluation.
         """
-        recalls_list = self.generate_subject(study, recall, param, param_def, patterns)
-        study_data = data[data['trial_type'] == 'study']
-        full_data = add_recalls(study_data, recalls_list)
-        merged = fr.merge_free_recall(full_data)
-        stats_fit, _ = stats_def.eval_stats(merged)
-        error_stat = stats_def.compare_stats(stats_data, stats_fit)
+        stats_fit_rep = []
+        for i in range(n_stats_rep):
+            # generate simulated data
+            recalls_list = self.generate_subject(study, recall, param, param_def, patterns)
+            study_data = data[data['trial_type'] == 'study']
+            full_data = add_recalls(study_data, recalls_list)
+
+            # calculate summary stats
+            merged = fr.merge_free_recall(full_data)
+            stats_fit, _ = stats_def.eval_stats(merged)
+            stats_fit_rep.append(stats_fit)
+
+        # calculate mean over replications        
+        reps = list(range(n_stats_rep))
+        group_vars = ["stat", "point", "conditions", "subject", "independent"]
+        stats_mean = (
+            pd.concat(stats_fit_rep, axis=0, keys=reps, names=["rep", "point"])
+            .groupby(group_vars)["dependent"]
+            .mean()
+            .reset_index()
+        )
+
+        # compare to data being fitted
+        error_stat = stats_def.compare_stats(stats_data, stats_mean)
         return error_stat
 
 
