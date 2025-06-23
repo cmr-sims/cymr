@@ -110,4 +110,4 @@ def test_compare_stats(data1, data2, stats_def):
     stats1, _ = stats_def.eval_stats(data1)
     stats2, _ = stats_def.eval_stats(data2)
     metric = stats_def.compare_stats(stats1, stats2)
-    assert round(metric(3)) == 0.0764
+    assert round(metric, 3) == 0.764
