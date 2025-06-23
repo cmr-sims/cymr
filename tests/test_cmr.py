@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from cymr import fit
 from cymr import cmr
+from cymr import statistics
 
 
 @pytest.fixture()
@@ -94,6 +95,27 @@ def test_cmr_fit(data, param):
     np.testing.assert_allclose(
         results['B_enc'].to_numpy(), np.array([0.72728744, 0.99883425]), atol=0.02
     )
+    np.testing.assert_array_equal(results['n'].to_numpy(), [3, 3])
+
+
+def test_cmr_fit_stat(data, param):
+    """Test fit of CMR parameters to sample data."""
+    model = cmr.CMR()
+    n_item = data['item_index'].nunique()
+    param_def, patterns = cmr.config_loc_cmr(n_item)
+    param_def.set_fixed(param)
+    param_def.set_free(B_enc=(0, 1))
+    items = data.query('trial_type == "study"').sort_values('item_index')['item'].to_numpy()
+    patterns['items'] = items
+
+    stats_def = statistics.Statistics(error_stat='rmsd', weighting='point')
+    stats_def.set_stat("spc", "psifr.fr:spc", ["input"], "recall", "group")
+
+    results = model.fit_indiv(
+        data, param_def, patterns=patterns, stats_def=stats_def, n_jobs=2, tol=0.1
+    )
+    assert 'B_enc' in results
+    assert 'rmsd' in results
     np.testing.assert_array_equal(results['n'].to_numpy(), [3, 3])
 
 
