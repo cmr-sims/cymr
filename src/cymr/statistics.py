@@ -2,6 +2,7 @@
 
 import importlib
 import pandas as pd
+import polars as pl
 
 
 class Analysis(object):
@@ -139,3 +140,33 @@ class Statistics(object):
             results[stat_name] = res
         stats = pd.concat(stat_list, ignore_index=True)
         return stats, results
+    
+    def compare_stats(self, stats1, stats2):
+        """Compare statistics."""
+        stats1 = pl.from_pandas(stats1)
+        stats2 = pl.from_pandas(stats2)
+        comb = stats1.join(
+            stats2, 
+            on=["stat", "conditions", "subject", "independent"], 
+            how="left", 
+            suffix="2",
+        )
+        
+        # formula for the statistic of interest
+        if self.error_stat == "rmsd":
+            err = ((pl.col("dependent") - pl.col("dependent2")) ** 2).mean().sqrt()
+        else:
+            raise ValueError(f"Unknown error statistic: {self.error_stat}")
+        
+        # calculate with specified weighting
+        if self.weighting == "point":
+            comp_stat = comb.select(err)[0, 0]
+        elif self.weighting == "statistic":
+            comp_stat = comb.group_by("stat").agg(err).select("dependent").mean()[0, 0]
+        elif self.weighting == "condition":
+            comp_stat = comb.group_by(
+                "stat", "conditions"
+            ).agg(err).select("dependent").mean()[0, 0]
+        else:
+            raise ValueError(f"Unknown weighting type: {self.weighting}")
+        return comp_stat
