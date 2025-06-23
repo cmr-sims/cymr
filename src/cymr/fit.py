@@ -607,19 +607,34 @@ class Recall(ABC):
         subjects = data['subject'].unique()
         full_subjects = np.repeat(subjects, n_rep)
         full_reps = np.tile(np.arange(n_rep), len(subjects))
-        full_results = Parallel(n_jobs=n_jobs)(
-            delayed(self._run_fit_subject)(
-                data, 
-                subject, 
-                param_def, 
-                patterns, 
-                study_keys, 
-                recall_keys, 
-                method, 
-                **kwargs,
+        if n_jobs == 1:
+            full_results = [
+                self._run_fit_subject(
+                    data, 
+                    subject, 
+                    param_def, 
+                    patterns, 
+                    study_keys, 
+                    recall_keys, 
+                    method, 
+                    **kwargs,
+                )
+                for subject in full_subjects
+            ]
+        else:
+            full_results = Parallel(n_jobs=n_jobs)(
+                delayed(self._run_fit_subject)(
+                    data, 
+                    subject, 
+                    param_def, 
+                    patterns, 
+                    study_keys, 
+                    recall_keys, 
+                    method, 
+                    **kwargs,
+                )
+                for subject in full_subjects
             )
-            for subject in full_subjects
-        )
         d = {
             (subject, rep): res
             for subject, rep, res in zip(full_subjects, full_reps, full_results)
