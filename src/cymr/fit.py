@@ -332,6 +332,49 @@ class Recall(ABC):
         """
         pass
 
+    def eval_model_stats(
+        self, data, study, recall, param, param_def, patterns, stats_def, stats_data
+    ):
+        """
+        Simulate data and evaluate fit to summary statistics.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            Data for one subject.
+
+        study : dict of (str: list of numpy.array)
+            Information about the study phase in list format.
+
+        recall : dict of (str: list of numpy.array)
+            Information about recall trials in list format.
+
+        param : dict of (str: float)
+            Model parameter values.
+
+        param_def : cymr.parameters.Parameters
+            Parameter definitions.
+
+        patterns : dict of (str: dict of (str: numpy.array)), optional
+            Patterns to use in the model.
+
+        stats_def : cymr.statistics.Statistics
+            Statistics to use when evaluating the model fit. If None,
+            will evaluate based on likelihood.
+
+        stats_data : pandas.DataFrame
+            Summary statistics for the comparison data. Must have been
+            evaluated using the same stat_def.
+        """
+        recalls_list = self.generate_subject(study, recall, param, param_def, patterns)
+        study_data = data[data['trial_type'] == 'study']
+        full_data = add_recalls(study_data, recalls_list)
+        merged = fr.merge_free_recall(full_data)
+        stats_fit, _ = stats_def.eval_stats(merged)
+        error_stat = stats_def.compare_stats(stats_data, stats_fit)
+        return error_stat
+
+
     def likelihood(
         self,
         data,
