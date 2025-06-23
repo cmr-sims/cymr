@@ -666,6 +666,7 @@ class Recall(ABC):
                     patterns, 
                     study_keys, 
                     recall_keys, 
+                    stats_def,
                     method, 
                     **kwargs,
                 )
@@ -680,6 +681,7 @@ class Recall(ABC):
                     patterns, 
                     study_keys, 
                     recall_keys, 
+                    stats_def,
                     method, 
                     **kwargs,
                 )
