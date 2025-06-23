@@ -67,7 +67,7 @@ class Analysis(object):
             cond_vars = ",".join(self.conditions)
         else:
             # apply the analysis to the whole dataset
-            res = f(data, *self.args, **self.kwargs)
+            res = f(data, *self.args, **self.kwargs).convert_dtypes()
             conds = "n/a"
             cond_vars = "n/a"
             if self.level == "group":
