@@ -19,6 +19,7 @@ dependencies = [
     "numpy",
     "scipy",
     "pandas",
+    "polars",
     "cython",
     "joblib",
     "h5py>=3.0",
