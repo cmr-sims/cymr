@@ -1,8 +1,20 @@
 """Manage statistical measures."""
 
 import importlib
+import json
 import pandas as pd
 import polars as pl
+
+
+def read_json(json_file):
+    """Read statistics definition from a JSON file."""
+    with open(json_file, "r") as f:
+        stat_dict = json.load(f)
+    
+    stat = Statistics(**stat_dict["options"])
+    for key, val in stat_dict["stats"].items():
+        stat.set_stat(key, **val)
+    return stat
 
 
 class Analysis(object):
@@ -10,7 +22,7 @@ class Analysis(object):
 
     def __init__(
         self, 
-        call,
+        function,
         independent,
         dependent,
         level,
@@ -18,7 +30,7 @@ class Analysis(object):
         kwargs=None, 
         conditions=None,
     ):
-        self.callable = call
+        self.function = function
         self.args = args if args is not None else []
         self.kwargs = kwargs if kwargs is not None else {}
         self.independent = independent
@@ -28,7 +40,7 @@ class Analysis(object):
     
     def __repr__(self):
         fields = [
-            "callable", 
+            "function", 
             "args", 
             "kwargs", 
             "independent", 
@@ -39,11 +51,23 @@ class Analysis(object):
         d = {f: getattr(self, f) for f in fields}
         s = "\n".join([f"{key}={val}" for key, val in d.items()])
         return s
+
+    def to_dict(self):
+        d = {
+            "function": self.function, 
+            "args": self.args,
+            "kwargs": self.kwargs,
+            "independent": self.independent,
+            "dependent": self.dependent,
+            "conditions": self.conditions,
+            "level": self.level
+        }
+        return d
     
     def eval(self, data):
         """Evaluate an analysis on a dataset."""
         # get the callable to run
-        mod, fun = self.callable.split(":")
+        mod, fun = self.function.split(":")
         f = getattr(importlib.import_module(mod), fun)
 
         if self.conditions is not None:
@@ -114,7 +138,7 @@ class Statistics(object):
 
     def __repr__(self):
         parts = {}
-        for name in ["error_stat", "weighting", "stats"]:
+        for name in ["options", "stats"]:
             obj = getattr(self, name)
             if isinstance(obj, dict):
                 fields = [f"\n{key}:\n{value}" for key, value in obj.items()]
@@ -124,6 +148,15 @@ class Statistics(object):
         s = "\n\n".join([f"{name}:\n{f}" for name, f in parts.items()])
         return s
     
+    def to_json(self, json_file):
+        """Write statistics definitions to a JSON file."""
+        data = {
+            "options": self.options, 
+            "stats": {stat: val.to_dict() for stat, val in self.stats.items()},
+        }
+        with open(json_file, "w") as f:
+            json.dump(data, f, indent=4)
+
     def set_stat(self, stat, *args, **kwargs):
         """Configure an analysis to generate a statistic."""
         self.stats[stat] = Analysis(*args, **kwargs)
