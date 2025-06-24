@@ -109,8 +109,7 @@ class Analysis(object):
 class Statistics(object):
 
     def __init__(self, error_stat="rmsd", weighting="point"):
-        self.error_stat = error_stat
-        self.weighting = weighting
+        self.options = {"error_stat": error_stat, "weighting": weighting}
         self.stats = {}
 
     def __repr__(self):
@@ -153,17 +152,17 @@ class Statistics(object):
         )
         
         # formula for the statistic of interest
-        if self.error_stat == "rmsd":
+        if self.options["error_stat"] == "rmsd":
             err = ((pl.col("dependent") - pl.col("dependent2")) ** 2).mean().sqrt()
         else:
-            raise ValueError(f"Unknown error statistic: {self.error_stat}")
+            raise ValueError(f"Unknown error statistic: {self.options["error_stat"]}")
         
         # calculate with specified weighting
-        if self.weighting == "point":
+        if self.options["weighting"] == "point":
             comp_stat = comb.select(err)[0, 0]
-        elif self.weighting == "statistic":
+        elif self.options["weighting"] == "statistic":
             comp_stat = comb.group_by("stat").agg(err).select("dependent").mean()[0, 0]
-        elif self.weighting == "condition":
+        elif self.options["weighting"] == "condition":
             comp_stat = comb.group_by(
                 "stat", "conditions"
             ).agg(err).select("dependent").mean()[0, 0]
