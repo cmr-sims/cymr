@@ -510,6 +510,9 @@ def init_network(param_def, patterns, param, item_index, remove_blank=False):
         for connect in ['fc', 'cf']:
             for region, mat in weights[connect].items():
                 include = np.any(mat != 0, 0)
+                if not any(include):
+                    # if no features nonzero, leave them all in
+                    continue
                 weights[connect][region] = mat[:, include]
 
     # set task units
