@@ -104,7 +104,7 @@ def test_cmr_fit_stat(data, param):
     n_item = data['item_index'].nunique()
     param_def, patterns = cmr.config_loc_cmr(n_item)
     param_def.set_fixed(param)
-    param_def.set_free(B_enc=(0, 1))
+    param_def.set_free(B_enc=(0.2, 0.4))
     items = data.query('trial_type == "study"').sort_values('item_index')['item'].to_numpy()
     patterns['items'] = items
 
@@ -116,7 +116,7 @@ def test_cmr_fit_stat(data, param):
         param_def, 
         patterns=patterns, 
         stats_def=stats_def, 
-        n_stats_rep=2, 
+        n_stats_rep=20, 
         n_jobs=2, 
         tol=0.1,
     )
