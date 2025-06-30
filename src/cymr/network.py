@@ -1199,7 +1199,7 @@ class Network(object):
     def plot(self, ax=None):
         """Plot the current state of the network."""
         if ax is None:
-            ax = init_plot()
+            _, ax = init_plot()
         for name, h in ax.items():
             if not hasattr(self, name):
                 continue
