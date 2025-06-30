@@ -188,7 +188,7 @@ class Statistics(object):
         if self.options["error_stat"] == "rmsd":
             err = ((pl.col("dependent") - pl.col("dependent2")) ** 2).mean().sqrt()
         else:
-            raise ValueError(f"Unknown error statistic: {self.options["error_stat"]}")
+            raise ValueError(f"Unknown error statistic: {self.options['error_stat']}")
         
         # calculate with specified weighting
         if self.options["weighting"] == "point":
