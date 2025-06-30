@@ -641,7 +641,9 @@ class Recall(ABC):
         if stats_def is None:
             results = {**param, 'logl': fit_stat, 'n': n, 'k': k}
         else:
-            results = {**param, stats_def.error_stat: fit_stat, 'n': n, 'k': k}
+            results = {
+                **param, stats_def.options['error_stat']: fit_stat, 'n': n, 'k': k
+            }
         return results
 
     def fit_indiv(
