@@ -1,6 +1,10 @@
 Network
 =======
 
+.. py:module:: cymr.network
+
+    Control of model network definition and dynamics.
+
 .. currentmodule:: cymr.network
 
 The :py:mod:`network` module includes efficient functions for running

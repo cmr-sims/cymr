@@ -1,6 +1,9 @@
-==========
 Parameters
 ==========
+
+.. py:module:: cymr.parameters
+
+    Management of model parameters.
 
 .. currentmodule:: cymr.parameters
 

@@ -1,6 +1,10 @@
 Fit
 ===
 
+.. py:module:: cymr.fit
+
+    Tools for fitting models to free-recall data.
+
 .. currentmodule:: cymr.fit
 
 The :py:mod:`fit` module provides tools for fitting a model to free-recall

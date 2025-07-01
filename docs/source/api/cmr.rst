@@ -1,6 +1,11 @@
 CMR
 ===
 
+.. py:module:: cymr.cmr
+
+    Tools for implementing variants of the context maintenance 
+    and retrieval model (CMR).
+
 .. currentmodule:: cymr.cmr
 
 The :py:mod:`cmr` module provides tools for implementing various CMR
