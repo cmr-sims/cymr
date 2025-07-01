@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from psifr import fr
-from cymr import statistics
+from cymr import analysis
 
 
 @pytest.fixture()
@@ -74,7 +74,7 @@ def data2(raw2):
 
 @pytest.fixture()
 def stats_def():
-    stats_def = statistics.Statistics()
+    stats_def = analysis.Statistics()
     stats_def.set_stat(
         "spc", "psifr.fr:spc", ["input"], "recall", "group", conditions=["task"]
     )

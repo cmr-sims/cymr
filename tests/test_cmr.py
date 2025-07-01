@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from cymr import fit
 from cymr import cmr
-from cymr import statistics
+from cymr import analysis
 
 
 @pytest.fixture()
@@ -108,7 +108,7 @@ def test_cmr_fit_stat(data, param):
     items = data.query('trial_type == "study"').sort_values('item_index')['item'].to_numpy()
     patterns['items'] = items
 
-    stats_def = statistics.Statistics(error_stat='rmsd', weighting='point')
+    stats_def = analysis.Statistics(error_stat='rmsd', weighting='point')
     stats_def.set_stat("spc", "psifr.fr:spc", ["input"], "recall", "group")
 
     results = model.fit_indiv(
