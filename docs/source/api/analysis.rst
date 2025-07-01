@@ -1,16 +1,28 @@
-Statistics
-==========
+Analysis
+========
 
-.. currentmodule:: cymr.statistics
+.. currentmodule:: cymr.analysis
 
 Statistic definitions are used to define a set of statistical analyses that
-may be used to fit a model. Definitions for a set of analyses are stored in 
-a  :py:class:`Statistics` object, which defines analyses to be run, not the
-results of analyses. :py:class:`Statistics` objects may be used to evaluate
+may be used to fit a model. Definitions of individual analyses are stored 
+in :py:class:`Analysis` objects, which specify how an analysis should be 
+run and the expected output variables.
+
+Definitions for a set of analyses are stored in a :py:class:`Statistics`
+object. :py:class:`Statistics` objects may be used to evaluate
 statistics on a given dataset.
 
 Statistic definitions may be saved to a JSON file to document exactly what 
 statistics were fitted, in a form that can be loaded and reused.
+
+Analysis definitions
+~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+    :toctree: api/
+
+    Analysis
+    Analysis.eval
 
 Statistic definitions
 ~~~~~~~~~~~~~~~~~~~~~
@@ -22,11 +34,6 @@ Statistic definitions
     Statistics.set_stat
     Statistics.eval_stats
     Statistics.compare_stats
-
-Analysis definitions
-~~~~~~~~~~~~~~~~~~~~
-
-.. autosummary
 
 Statistic definition files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -7,6 +7,6 @@ API Reference
    /api/cmr
    /api/fit
    /api/parameters
-   /api/statistics
+   /api/analysis
    /api/network
    /api/operations
