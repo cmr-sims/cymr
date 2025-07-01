@@ -18,7 +18,35 @@ def read_json(json_file):
 
 
 class Analysis(object):
-    """Manage analysis specification."""
+    """
+    Manage analysis specification.
+
+    Attributes
+    ----------
+    function : str
+        Path to a function, in the form "package.module:function".
+        Must take free-recall data in merged Psifr format as the first
+        argument.
+    
+    independent : list of str
+        List of expected columns with independent variables.
+    
+    dependent : str
+        Expected column with dependent variable.
+    
+    level : str
+        Level of the analysis. May be "group" or "subject". If "group",
+        the result will be averaged across subjects.
+    
+    args : list
+        Positional arguments for the function, after data.
+    
+    kwargs : dict
+        Keyword arguments for the function.
+    
+    conditions : list of str
+        Data columns to group by when running the analysis.
+    """
 
     def __init__(
         self, 
@@ -65,7 +93,43 @@ class Analysis(object):
         return d
     
     def eval(self, data):
-        """Evaluate an analysis on a dataset."""
+        """
+        Evaluate an analysis on a dataset.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            Free-recall data in merged Psifr format.
+        
+        Returns
+        -------
+        stat : pandas.DataFrame
+            Dependent variables by condition, subject, and independent
+            variables, in standardized format.
+        
+        result : pandas.DataFrame
+            Raw result from the analysis.
+
+        Examples
+        --------
+        >>> from cymr.analysis import Analysis
+        >>> from cymr import fit
+        >>> from psifr import fr
+        >>> ana = Analysis("psifr.fr:spc", ["input"], "recall", "group")
+        >>> raw = fit.sample_data("sample1")
+        >>> data = fr.merge_free_recall(raw)
+        >>> stat, result = ana.eval(data)
+        >>> stat
+          condition_vars conditions subject independent_vars independent dependent_var  dependent
+        0            n/a        n/a     n/a            input           1        recall        0.5
+        1            n/a        n/a     n/a            input           2        recall        0.5
+        2            n/a        n/a     n/a            input           3        recall        1.0
+        >>> result
+           input  recall
+        0      1     0.5
+        1      2     0.5
+        2      3     1.0
+        """
         # get the callable to run
         mod, fun = self.function.split(":")
         f = getattr(importlib.import_module(mod), fun)
@@ -131,6 +195,22 @@ class Analysis(object):
 
 
 class Statistics(object):
+    """
+    Manage statistics specifications.
+
+    Attributes
+    ----------
+    options : dict
+        Options for comparing statistics. The "error_stat" 
+        (default "rmsd") defines the error statistic to calculate.
+        The "weighting" (default: "point") defines how individual
+        error statistics are combined when calculating the mean
+        error. Allowed values are "point", "statistic", and
+        "condition".
+    
+    stats : dict of (str: Analysis)
+        Analysis specification for each statistic.
+    """
 
     def __init__(self, error_stat="rmsd", weighting="point"):
         self.options = {"error_stat": error_stat, "weighting": weighting}
@@ -149,7 +229,14 @@ class Statistics(object):
         return s
     
     def to_json(self, json_file):
-        """Write statistics definitions to a JSON file."""
+        """
+        Write statistics definitions to a JSON file.
+        
+        Parameters
+        ----------
+        json_file : str
+            Path to file to save json data.
+        """
         data = {
             "options": self.options, 
             "stats": {stat: val.to_dict() for stat, val in self.stats.items()},
@@ -158,11 +245,64 @@ class Statistics(object):
             json.dump(data, f, indent=4)
 
     def set_stat(self, stat, *args, **kwargs):
-        """Configure an analysis to generate a statistic."""
+        """
+        Configure an analysis to generate a statistic.
+        
+        Parameters
+        ----------
+        stat : str
+            Name of the statistic.
+        
+        function : str
+            Path to a function, in the form "package.module:function".
+            Must take free-recall data in merged Psifr format as the first
+            argument.
+        
+        independent : list of str
+            List of expected columns with independent variables.
+        
+        dependent : str
+            Expected column with dependent variable.
+        
+        level : str
+            Level of the analysis. May be "group" or "subject". If "group",
+            the result will be averaged across subjects.
+        
+        args : list
+            Positional arguments for the function, after data.
+        
+        kwargs : dict
+            Keyword arguments for the function.
+        
+        conditions : list of str
+            Data columns to group by when running the analysis.
+        
+        Examples
+        --------
+        >>> from cymr import analysis
+        >>> stat_def = analysis.Statistics()
+        >>> stat_def.set_stat("spc", "psifr.fr:spc", ["input"], "recall", "group")
+        """
         self.stats[stat] = Analysis(*args, **kwargs)
     
     def eval_stats(self, data):
-        """Evaluate all statistics."""
+        """
+        Evaluate all statistics.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            Free-recall data in merged Psifr format.
+        
+        Returns
+        -------
+        stats : pandas.DataFrame
+            All statistics in standardized format, concatenated with
+            one row per dependent variable.
+        
+        results : list of pandas.DataFrame
+            All results in raw format.
+        """
         results = {}
         stat_list = []
         for stat_name, stat_def in self.stats.items():
@@ -174,7 +314,22 @@ class Statistics(object):
         return stats, results
     
     def compare_stats(self, stats1, stats2):
-        """Compare statistics."""
+        """
+        Compare statistics.
+
+        Parameters
+        ----------
+        stats1 : pandas.DataFrame
+            Statistics in standardized format.
+        
+        stats2 : pandas.DataFrame
+            Statistics in standardized format.
+        
+        Returns
+        -------
+        error_stat : float
+            Error statistic.
+        """
         stats1 = pl.from_pandas(stats1)
         stats2 = pl.from_pandas(stats2)
         comb = stats1.join(
