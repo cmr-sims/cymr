@@ -682,11 +682,13 @@ class Recall(ABC):
 
         stats_def : cymr.statistics.Statistics
             Statistics to use when evaluating the model fit. If None,
-            will evaluate based on likelihood.
+            will evaluate based on likelihood. If specified, simulated
+            data will be generated and used to calculate the 
+            statistics, which will be compared to the observed data.
         
         n_stats_rep : int, optional
             Number of times to replicate generation and stat 
-            evaluation.
+            evaluation. Only used if stats_def is not None.
 
         n_jobs : int, optional
             Number of processes to use for fitting subjects in
