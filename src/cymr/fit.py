@@ -680,7 +680,7 @@ class Recall(ABC):
         recall_keys : list of str
             Fields to include in recall data.
 
-        stats_def : cymr.statistics.Statistics
+        stats_def : cymr.analysis.Statistics
             Statistics to use when evaluating the model fit. If None,
             will evaluate based on likelihood. If specified, simulated
             data will be generated and used to calculate the 
