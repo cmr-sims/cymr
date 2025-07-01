@@ -663,6 +663,17 @@ class Recall(ABC):
         """
         Fit parameters to individual subjects.
 
+        Parameters may be estimated either based on evaluating the
+        overall likelihood of recall sequences in the observed data,
+        or based on specific summary statistics. 
+        
+        To fit to summary statistics, simulated data must be generated 
+        first so they can be analyzed. Note that simulated data are 
+        stochastic, and any variability in summary statistics may 
+        complicate the parameter search. To help stabalize summary 
+        statistics, simulated data may optionally replicate the study 
+        multiple times.
+
         Parameters
         ----------
         data : pandas.DataFrame
@@ -682,9 +693,11 @@ class Recall(ABC):
 
         stats_def : cymr.analysis.Statistics
             Statistics to use when evaluating the model fit. If None,
-            will evaluate based on likelihood. If specified, simulated
-            data will be generated and used to calculate the 
-            statistics, which will be compared to the observed data.
+            the fit will be evaluated based on the overall likelihood
+            of the observed recall sequences. If a stats_def is 
+            specified, simulated data will be generated and used to 
+            calculate the statistics, which will be compared to the 
+            observed data.
         
         n_stats_rep : int, optional
             Number of times to replicate generation and stat 
