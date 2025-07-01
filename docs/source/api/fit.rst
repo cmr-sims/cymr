@@ -1,8 +1,13 @@
-===
 Fit
 ===
 
 .. currentmodule:: cymr.fit
+
+The :py:mod:`fit` module provides tools for fitting a model to free-recall
+data. Models can inherit from the :py:class:`Recall` class and 
+implement subject-level methods for evaluating likelihood and simulating
+data. The model class will then have access to high-level methods for 
+evaluating, fitting, and simulating models.
 
 Utilities
 ~~~~~~~~~

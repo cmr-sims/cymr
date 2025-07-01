@@ -1,6 +1,9 @@
 Operations
 ==========
 
+The :py:mod:`operations` module contains Cython code designed to run
+core CMR mechanisms as fast as possible.
+
 .. currentmodule:: cymr.operations
 
 Basic operations
