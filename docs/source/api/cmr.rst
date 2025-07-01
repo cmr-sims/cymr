@@ -8,7 +8,7 @@ CMR
 
 .. currentmodule:: cymr.cmr
 
-The :py:mod:`cmr` module provides tools for implementing various CMR
+The :py:mod:`~!cymr.cmr` module provides tools for implementing various CMR
 model variants using the :py:class:`CMR` class. Rather than implementing 
 one specific version of CMR, :py:class:`CMR` is designed to be highly 
 configurable via changes to the :py:class:`CMRParameters` class, which 

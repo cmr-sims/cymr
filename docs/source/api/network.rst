@@ -7,7 +7,7 @@ Network
 
 .. currentmodule:: cymr.network
 
-The :py:mod:`network` module includes efficient functions for running
+The :py:mod:`~!cymr.network` module includes efficient functions for running
 core mechanisms of CMR. These functions will generally not be called
 directly by users. See the :py:mod:`~cymr.cmr` module for high-level functions
 for running parameter searches and simulations using CMR.

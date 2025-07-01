@@ -5,7 +5,7 @@ Operations
 
     Cython code to simulate network mechanisms.
 
-The :py:mod:`operations` module contains Cython code designed to run
+The :py:mod:`~!cymr.operations` module contains Cython code designed to run
 core CMR mechanisms as fast as possible. Mechanisms operate on
 :py:class:`~cymr.network.Network` objects.
 
