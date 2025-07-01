@@ -719,9 +719,10 @@ class Recall(ABC):
         Returns
         -------
         results : pandas.DataFrame
-            Best-fitting parameters, log likelihood (:code:`logl`),
-            number of data points (:code:`n`), and number of free
-            parameters (:code:`k`) for each subject.
+            Best-fitting parameters, log likelihood (:code:`logl`)
+            or error statistic specified by stats_def, number of data 
+            points (:code:`n`), and number of free parameters 
+            (:code:`k`) for each subject.
         """
         subjects = data['subject'].unique()
         full_subjects = np.repeat(subjects, n_rep)
