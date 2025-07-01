@@ -25,8 +25,8 @@ framework
     to fit a dataset.
 
 The cymr package defines the network and model levels. It also includes
-infrastructure to help with implementing model frameworks. The cmr_cfr
-package is an example of implementing a framework.
+infrastructure to help with implementing model frameworks. The 
+:py:mod:`dcmr` package is an example of implementing a framework.
 
 Defining a model
 ~~~~~~~~~~~~~~~~
