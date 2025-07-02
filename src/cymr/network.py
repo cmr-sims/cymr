@@ -84,17 +84,18 @@ def sample_response_lba(A, b, v, s, tau):
 
 def init_plot(**kwargs):
     fig = plt.figure(constrained_layout=True, **kwargs)
-    gs = GridSpec(10, 5, figure=fig)
+    gs = GridSpec(20, 10, figure=fig)
+    fig.get_layout_engine().set(w_pad=1 / 200, h_pad=1 / 200, hspace=0, wspace=0)
     ax = {
-        'c': fig.add_subplot(gs[0, 1:4]),
-        'c_in': fig.add_subplot(gs[1, 1:4]),
-        'f_in': fig.add_subplot(gs[8, 1:4]),
-        'f': fig.add_subplot(gs[9, 1:4]),
-        'w_fc_pre': fig.add_subplot(gs[2:8, 0]),
-        'w_fc_exp': fig.add_subplot(gs[2:8, 1]),
-        'w_ff_pre': fig.add_subplot(gs[2:8, 2]),
-        'w_cf_exp': fig.add_subplot(gs[2:8, 3]),
-        'w_cf_pre': fig.add_subplot(gs[2:8, 4]),
+        'c': fig.add_subplot(gs[0, 3:7]),
+        'c_in': fig.add_subplot(gs[1, 3:7]),
+        'f_in': fig.add_subplot(gs[-2, 4:6]),
+        'f': fig.add_subplot(gs[-1, 4:6]),
+        'w_fc_pre': fig.add_subplot(gs[3:10, 0:4]),
+        'w_fc_exp': fig.add_subplot(gs[10:17, 0:4]),
+        'w_ff_pre': fig.add_subplot(gs[3:10, 4:6]),
+        'w_cf_exp': fig.add_subplot(gs[10:17, 6:10]),
+        'w_cf_pre': fig.add_subplot(gs[3:10, 6:10]),
     }
     return fig, ax
 
@@ -1209,4 +1210,4 @@ class Network(object):
             h.matshow(mat)
             h.set_aspect('auto')
             h.set_axis_off()
-            h.set_title(name, fontsize=12)
+            h.set_title(name, fontsize=12, pad=0)
