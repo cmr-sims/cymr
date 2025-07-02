@@ -476,7 +476,7 @@ def config_loc_cmr(n_item):
     return param_def, patterns
 
 
-def init_network(param_def, patterns, param, item_index, filter_item=None):
+def init_network(param_def, patterns, param, item_index, filter_item_segments=None):
     """
     Initialize a network with pattern weights.
 
@@ -494,8 +494,8 @@ def init_network(param_def, patterns, param, item_index, filter_item=None):
     item_index : numpy.array
         Indices of item patterns to include in the network.
 
-    filter_item : list of str
-        Context units of these sublayers will be filtered by item_index.
+    filter_item_segments : list of str
+        Context units of these segments will be filtered by item_index.
 
     Returns
     -------
@@ -505,11 +505,11 @@ def init_network(param_def, patterns, param, item_index, filter_item=None):
     # set item weights
     weights = param_def.eval_weights(patterns, param, item_index)
 
-    if filter_item is not None:
-        # remove context units that are zero for all items
+    if filter_item_segments is not None:
+        # filter item context units to remove unused items
         for connect in ['fc', 'cf']:
             for region, mat in weights[connect].items():
-                if region[1][0] in filter_item:
+                if region[1] in filter_item_segments:
                     weights[connect][region] = mat[:, item_index]
 
     # set task units
@@ -888,7 +888,7 @@ class CMR(Recall):
         param,
         param_def=None,
         patterns=None,
-        filter_item=None,
+        filter_item_segments=None,
         include=None,
         exclude=None,
     ):
@@ -914,7 +914,7 @@ class CMR(Recall):
                 patterns,
                 list_param,
                 study['item_index'][i],
-                filter_item=filter_item,
+                filter_item_segments=filter_item_segments,
             )
             net.update(('task', 'start', 0), net.c_sublayers)
 
