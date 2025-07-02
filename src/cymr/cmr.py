@@ -476,7 +476,7 @@ def config_loc_cmr(n_item):
     return param_def, patterns
 
 
-def init_network(param_def, patterns, param, item_index, remove_blank=False):
+def init_network(param_def, patterns, param, item_index, remove_blank=None):
     """
     Initialize a network with pattern weights.
 
@@ -494,8 +494,8 @@ def init_network(param_def, patterns, param, item_index, remove_blank=False):
     item_index : numpy.array
         Indices of item patterns to include in the network.
 
-    remove_blank : bool
-        If true, context units with zero weights will be removed.
+    remove_blank : list of str
+        Context units of these sublayers with zero weights will be removed.
 
     Returns
     -------
@@ -505,10 +505,12 @@ def init_network(param_def, patterns, param, item_index, remove_blank=False):
     # set item weights
     weights = param_def.eval_weights(patterns, param, item_index)
 
-    if remove_blank:
+    if remove_blank is not None:
         # remove context units that are zero for all items
         for connect in ['fc', 'cf']:
             for region, mat in weights[connect].items():
+                if not region[1][0] in remove_blank:
+                    continue
                 include = np.any(mat != 0, 0)
                 if not any(include):
                     # if no features nonzero, leave them all in
