@@ -515,6 +515,25 @@ def test_sublayer_generate(data, patterns, param_def_sublayer, param_dist):
     assert isinstance(sim, pd.DataFrame)
 
 
+def test_sublayer_record_trim(data, patterns, param_def_sublayer, param_dist):
+    """Test removal of non-item units."""
+    param = param_dist.copy()
+    param['B_enc_loc'] = 0.5
+    param['B_enc_cat'] = 0.8
+    model = cmr.CMR()
+    states = model.record(
+        data, 
+        param, 
+        None, 
+        param_def_sublayer, 
+        patterns=patterns, 
+        filter_item_segments=[('loc', 'item')],
+    )
+    np.testing.assert_allclose(
+        states[0].c, np.array([0.5, 0.0, 0.0, 0.8660254, 0.8, 0.0, 0.6])
+    )
+
+
 def test_match_generate(data, patterns, param_def_dist, param_dist):
     """Test generating recalls using context match screening."""
     param = param_dist.copy()
