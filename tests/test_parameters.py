@@ -55,6 +55,7 @@ def split_data(data):
 
 
 def test_set_dependent():
+    """Test setting of dependent parameters."""
     param = {'Lfc': 0.7}
     dependent = {'Dfc': '1 - Lfc'}
     updated = parameters.set_dependent(param, dependent)
@@ -63,6 +64,7 @@ def test_set_dependent():
 
 
 def test_set_dynamic(data):
+    """Test setting of dynamic parameters"""
     param = {'B_distract': 0.2}
     dynamic = {'study': {'B_enc': 'distract * B_distract'}}
     study_data = fr.filter_data(data, 1, 1, 'study')
@@ -111,6 +113,7 @@ def test_blank(split_data):
 
 
 def test_json(param_def, tmp_path):
+    """Test writing and reading parameter definitions."""
     p = tmp_path / 'parameters.json'
     param_def.to_json(p.as_posix())
     param = parameters.read_json(p.as_posix())

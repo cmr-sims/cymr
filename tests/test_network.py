@@ -93,6 +93,7 @@ def net_study_distract():
 
 
 def test_expand_param():
+    """Test parameter expansion by item and sublayer."""
     # scalar
     p = network.expand_param(1, (4, 2))
     np.testing.assert_array_equal(p, np.ones((4, 2)))
@@ -107,6 +108,7 @@ def test_expand_param():
 
 
 def test_copy(net_pre):
+    """Test copying of a network."""
     net2 = net_pre.copy()
     np.testing.assert_array_equal(net_pre.w_fc_pre, net2.w_fc_pre)
 
@@ -123,6 +125,7 @@ def test_copy(net_pre):
 
 
 def test_study_record(net_pre):
+    """Test recoding of network states during study."""
     net = net_pre.copy()
     net.update(('task', 'start', 0), 'task')
     B = 0.5
@@ -156,6 +159,7 @@ def test_study_record(net_pre):
 
 
 def test_recall_record(net_study):
+    """Test recoding of network states during recall."""
     net = net_study
     recalls = [2, 0, 1]
     B = 0.8
@@ -201,6 +205,7 @@ def net_sublayers():
 
 
 def test_init_layer():
+    """Test layer segment initialization."""
     layer_segments = {
         'loc': {'item': 3, 'start': 1},
         'cat': {'item': 2, 'start': 1},
@@ -221,6 +226,7 @@ def test_init_layer():
 
 
 def test_network_init(net):
+    """Test network initialization."""
     n_f = net.n_f
     n_c = net.n_c
     assert net.w_cf_exp.shape == (n_f, n_c)
@@ -232,39 +238,46 @@ def test_network_init(net):
 
 
 def test_network_copy(net):
+    """Test making a copy of a network."""
     net_copy = net.copy()
     assert net_copy.n_f == net.n_f
     assert net_copy.n_c == net.n_c
 
 
 def test_get_sublayer(net):
+    """Test getting a sublayer of context."""
     c_ind = net.get_sublayer('c', 'task')
     np.testing.assert_array_equal(c_ind, np.array([0, 6]))
 
 
 def test_get_sublayers(net_sublayers):
+    """Test getting multiple sublayers of context."""
     c_ind = net_sublayers.get_sublayers('c', ['loc', 'cat', 'sem'])
     np.testing.assert_array_equal(c_ind, np.array([[0, 4], [4, 7], [7, 13]]))
 
 
 def test_get_region(net):
+    """Test getting a region of weights."""
     f_slice, c_slice = net.get_region(('task', 'item'), ('task', 'start'))
     assert f_slice == slice(0, 3)
     assert c_slice == slice(5, 6)
 
 
 def test_get_segment(net):
+    """Test getting a segment of a layer."""
     f_ind = net.get_segment('f', 'task', 'item')
     np.testing.assert_array_equal(f_ind, np.array([0, 3]))
 
 
 def test_get_slice(net):
+    """Test getting a slice of a layer."""
     f_slice = net.get_slice('f', 'task', 'item')
     assert f_slice.start == 0
     assert f_slice.stop == 3
 
 
 def test_get_unit(net):
+    """Test getting one specific unit."""
     ind = net.get_unit('f', 'task', 'start', 0)
     assert ind == 3
     ind = net.get_unit('c', 'task', 'item', 4)
@@ -272,6 +285,7 @@ def test_get_unit(net):
 
 
 def test_pre_weights(net_pre, weights):
+    """Test setting of pre-experimental weights."""
     net = net_pre
     f_slice, c_slice = net.get_region(('task', 'item'), ('task', 'item'))
     np.testing.assert_array_equal(net.w_fc_pre[f_slice, c_slice], weights)
@@ -279,6 +293,7 @@ def test_pre_weights(net_pre, weights):
 
 
 def test_update(net_pre):
+    """Test full updating of context."""
     net = net_pre
     net.update(('task', 'start', 0), 'task')
     expected = np.array([0, 0, 0, 0, 0, 1])
@@ -286,6 +301,7 @@ def test_update(net_pre):
 
 
 def test_present(net_pre):
+    """Test presentation of an item and updating of context."""
     net = net_pre
     net.c[0] = 1
     net.present(('task', 'item', 0), 'task', 0.5)
@@ -297,6 +313,7 @@ def test_present(net_pre):
 
 
 def test_learn(net_pre):
+    """Test presentation and learning of an item."""
     net = net_pre
     net.update(('task', 'start', 0), 'task')
     net.present(('task', 'item', 0), 'task', 0.5)
@@ -313,6 +330,7 @@ def test_learn(net_pre):
 
 
 def test_study(net_study, net_study_list):
+    """Test weights after studying of a list."""
     expected = np.array(
         [
             [0.0000, 0.0913, 0.1826, 0.2739, 0.3651, 0.8660],
@@ -337,6 +355,7 @@ def test_study(net_study, net_study_list):
 
 
 def test_study_distract(net_study_distract):
+    """Test weights after studying of a list with distraction."""
     net = net_study_distract
     expected = np.array(
         [
@@ -363,6 +382,7 @@ def test_study_distract(net_study_distract):
 
 
 def test_recall(net_study):
+    """Test recall probabilities for a first recall attempt."""
     net = net_study
     recalls = [2, 0, 1]
     B = 0.8
@@ -376,6 +396,7 @@ def test_recall(net_study):
 
 
 def test_sequences(net_study):
+    """Test that the probability of all possible sequences is near one."""
     net = net_study
     c_study = net.c.copy()
 
@@ -403,6 +424,7 @@ def test_sequences(net_study):
 
 
 def test_generate(net_study):
+    """Test that generating a recall sequence works."""
     net = net_study.copy()
     B = 0.8
     T = 10
@@ -414,6 +436,7 @@ def test_generate(net_study):
 
 
 def test_generate_lba(net_study):
+    """Test sequence generation using a linear ballistic accumulator."""
     net = net_study.copy()
     B = 0.8
     time_limit = 90
@@ -437,6 +460,7 @@ def patterns():
 
 
 def test_cmr_patterns(patterns):
+    """Test setting weights based on patterns and configuration."""
     param_def = cmr.CMRParameters()
     fcf_weights = {
         (('task', 'item'), ('task', 'loc')): 'w_loc * loc',

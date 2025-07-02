@@ -105,6 +105,7 @@ def patterns():
 
 
 def test_eval_weights(param_def, patterns):
+    """Test evaluation of weight specifications."""
     weights = param_def.eval_weights(patterns)
     np.testing.assert_array_equal(
         weights['fc'][(('task', 'item'), ('loc', 'item'))], patterns['vector']['loc']
@@ -125,6 +126,7 @@ def test_eval_weights(param_def, patterns):
 
 
 def test_eval_weights_index(param_def, patterns):
+    """Test using item index to select patterns."""
     item_index = np.arange(12)
     weights = param_def.eval_weights(patterns, item_index=item_index)
     assert weights['fc'][(('task', 'item'), ('loc', 'item'))].shape == (12, 24)
@@ -133,6 +135,7 @@ def test_eval_weights_index(param_def, patterns):
 
 
 def test_eval_sublayer_param(param_def):
+    """Test evaluation of sublayer parameters."""
     param = {'B_enc_loc': 0.8, 'B_enc_cat': 0.4}
     eval_param = param_def.eval_sublayer_param('c', param, 3)
     expected = np.array([[0.8, 0.4], [0.8, 0.4], [0.8, 0.4]])

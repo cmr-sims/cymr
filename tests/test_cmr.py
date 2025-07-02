@@ -139,6 +139,7 @@ def patterns():
 
 
 def test_pattern_io(patterns):
+    """Test pattern saving and loading."""
     temp = 'test_pattern.hdf5'
     cmr.save_patterns(
         temp,
@@ -308,6 +309,7 @@ def test_dist_cmr_generate(data, patterns, param_def_dist, param_dist):
 
 
 def test_dist_cmr_record(data, patterns, param_def_dist, param_dist):
+    """Test recording of distributed context."""
     model = cmr.CMR()
     states = model.record(data, param_dist, None, param_def_dist, patterns=patterns)
 
@@ -341,6 +343,7 @@ def test_dist_cmr_record(data, patterns, param_def_dist, param_dist):
 
 
 def test_dist_cmr_distract_record(data, patterns, param_def_dist, param_dist):
+    """Test recording with distraction."""
     model = cmr.CMR()
     param_def = param_def_dist.copy()
     param_def.set_options(distraction=True)
@@ -363,6 +366,7 @@ def test_dist_cmr_distract_record(data, patterns, param_def_dist, param_dist):
 
 
 def test_dist_cmr_record_trim(data, patterns, param_def_dist, param_dist):
+    """Test trimming of context without sublayers."""
     model = cmr.CMR()
     states = model.record(
         data, 
@@ -376,6 +380,7 @@ def test_dist_cmr_record_trim(data, patterns, param_def_dist, param_dist):
 
 
 def test_dist_cmr_record_include(data, patterns, param_def_dist, param_dist):
+    """Test recording of specific network components."""
     model = cmr.CMR()
     states = model.record(
         data, param_dist, None, param_def_dist, patterns=patterns, include=['c', 'c_in']

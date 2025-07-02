@@ -45,6 +45,7 @@ def data():
 
 
 def test_likelihood_subject(data):
+    """Test evaluation of likelihood for one subject."""
     data = data.copy()
     rec = TestRecall()
     subject_data = data.loc[data['subject'] == 1]
@@ -55,6 +56,7 @@ def test_likelihood_subject(data):
 
 
 def test_likelihood(data):
+    """Test evaluation of likelihood for a dataset."""
     data = data.copy()
     rec = TestRecall()
     param = {'x': -2}
@@ -63,6 +65,7 @@ def test_likelihood(data):
 
 
 def test_fit_subject(data):
+    """Test fitting parameters to a subject."""
     data = data.copy()
     rec = TestRecall()
     param_def = parameters.Parameters()
@@ -76,6 +79,7 @@ def test_fit_subject(data):
 
 
 def test_fit_indiv(data):
+    """Test fitting parameters to multiple subjects."""
     data = data.copy()
     rec = TestRecall()
     param_def = parameters.Parameters()
@@ -88,6 +92,7 @@ def test_fit_indiv(data):
 
 
 def test_generate_subject(data):
+    """Test generating recalls for a subject."""
     data = data.copy()
     rec = TestRecall()
     study = data.loc[(data['trial_type'] == 'study') & (data['subject'] == 1)]
@@ -100,6 +105,7 @@ def test_generate_subject(data):
 
 
 def test_generate(data):
+    """Test generating recalls for a dataset."""
     data = data.copy()
     rec = TestRecall()
     subj_param = {
@@ -124,6 +130,7 @@ def test_generate(data):
 
 
 def test_record_subject(data):
+    """Test recording context for one subject."""
     rec = TestRecall()
     study, recall = fit.prepare_lists(data.loc[data['subject'] == 1])
     study_state, recall_state = rec.record_subject(study, recall, {})
@@ -132,6 +139,7 @@ def test_record_subject(data):
 
 
 def test_record(data):
+    """Test recording context for a dataset."""
     rec = TestRecall()
     states = rec.record(data, {})
     np.testing.assert_array_equal(
