@@ -374,7 +374,7 @@ def test_dist_cmr_record_trim(data, patterns, param_def_dist, param_dist):
         None, 
         param_def_dist, 
         patterns=patterns, 
-        filter_item_segments=[('task', 'item')],
+        index_segments=[('task', 'item')],
     )
     np.testing.assert_allclose(states[0].c, np.array([0.5, 0.0, 0.0, 0.8660254]))
 
@@ -532,7 +532,7 @@ def test_sublayer_record_trim(data, patterns, param_def_sublayer, param_dist):
         None, 
         param_def_sublayer, 
         patterns=patterns, 
-        filter_item_segments=[('loc', 'item')],
+        index_segments=[('loc', 'item')],
     )
     np.testing.assert_allclose(
         states[0].c, np.array([0.5, 0.0, 0.0, 0.8660254, 0.8, 0.0, 0.6])
