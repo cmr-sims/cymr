@@ -642,6 +642,12 @@ def prepare_list_param(n_item, n_sub, param, param_def):
     if 'c' in param_def.sublayer_param:
         # evaluate sublayer parameters
         param = param_def.eval_sublayer_param('c', param, n_item)
+        scalar_param = ['B_start']
+        for par in scalar_param:
+            p = param[par]
+            if isinstance(p, np.ndarray) and p.shape[0] > 1:
+                # if there is a value for each item, use the last one
+                param[par] = p[-1]
 
         # get the set of all sublayer parameters
         sub_param = set()
