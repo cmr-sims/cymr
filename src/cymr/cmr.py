@@ -368,7 +368,10 @@ class CMRParameters(Parameters):
             for par, expr in self.sublayer_param[layer][sublayer].items():
                 if par not in param_lists:
                     param_lists[par] = []
-                value = eval(expr, np.__dict__, param)
+                if isinstance(expr, str):
+                    value = eval(expr, np.__dict__, param)
+                else:
+                    value = expr
                 param_lists[par].append(value)
 
         # prepare parameter arrays
