@@ -115,9 +115,10 @@ cpdef integrate(
             sum_squares += c_in[j] * c_in[j]
 
         # normalize the vector to have an L2 norm of 1
-        norm = sqrt(sum_squares)
-        for j in range(c_ind[i, 0], c_ind[i, 1]):
-            c_in[j] /= norm
+        if sum_squares > 0:
+            norm = sqrt(sum_squares)
+            for j in range(c_ind[i, 0], c_ind[i, 1]):
+                c_in[j] /= norm
 
         # integrate
         integrate_context(c, c_in, B[i], c_ind[i])
