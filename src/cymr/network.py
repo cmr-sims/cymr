@@ -40,6 +40,8 @@ def expand_param(param, size):
                 elif n != size[i] and n < size[i]:
                     raise ValueError('Cannot expand parameter.')
             param = np.tile(param, rep).astype(float)
+    else:
+        param = np.astype(param, float, copy=False)
     return param
 
 
