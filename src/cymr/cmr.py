@@ -810,7 +810,6 @@ class CMR(Recall):
         return study, recall
 
     def likelihood_subject(self, study, recall, param, param_def=None, patterns=None):
-        n_item = len(study['input'][0])
         n_list = len(study['input'])
         if param_def is None:
             raise ValueError('Must provide a Parameters object.')
@@ -820,16 +819,21 @@ class CMR(Recall):
         logl = 0
         n = 0
         for i in range(n_list):
+            item_pool, item_study, item_recall, item_distract = get_list_items(
+                item_index, study, recall, i, param_def.options['scope']
+            )
+            n_item = len(item_study)
+            n_recall = len(item_recall)
+            
             # access the dynamic parameters needed for this list
             list_param = param.copy()
             list_param = param_def.get_dynamic(list_param, i)
             list_param = param_def.eval_dependent(list_param)
-            list_param = prepare_list_param(n_item, n_sub, list_param, param_def)
+            list_param = prepare_list_param(
+                n_item, n_sub, list_param, param_def, n_recall
+            )
 
             # simulate study
-            item_pool, item_study, item_recall, item_distract = get_list_items(
-                item_index, study, recall, i, param_def.options['scope']
-            )
             net = study_list(
                 param_def, list_param, item_pool, item_study, patterns, item_distract
             )
@@ -858,7 +862,6 @@ class CMR(Recall):
     def generate_subject(
         self, study, recall, param, param_def=None, patterns=None, **kwargs
     ):
-        n_item = len(study['input'][0])
         n_list = len(study['input'])
         if param_def is None:
             raise ValueError('Must provide a Parameters object.')
@@ -867,6 +870,11 @@ class CMR(Recall):
         item_index = np.arange(len(patterns['items']))
         recalls_list = []
         for i in range(n_list):
+            item_pool, item_study, item_recall, item_distract = get_list_items(
+                item_index, study, recall, i, param_def.options['scope']
+            )
+            n_item = len(item_study)
+
             # access the dynamic parameters needed for this list
             list_param = param.copy()
             list_param = param_def.get_dynamic(list_param, i)
@@ -874,9 +882,6 @@ class CMR(Recall):
             list_param = prepare_list_param(n_item, n_sub, list_param, param_def)
 
             # simulate study
-            item_pool, item_study, item_recall, item_distract = get_list_items(
-                item_index, study, recall, i, param_def.options['scope']
-            )
             net = study_list(
                 param_def, list_param, item_pool, item_study, patterns, item_distract
             )
@@ -918,7 +923,6 @@ class CMR(Recall):
         include=None,
         exclude=None,
     ):
-        n_item = len(study['input'][0])
         n_list = len(study['input'])
         if param_def is None:
             raise ValueError('Must provide a Parameters object.')
@@ -928,11 +932,19 @@ class CMR(Recall):
         recall_state = []
         item_index = np.arange(len(patterns['items']))
         for i in range(n_list):
+            item_pool, item_study, item_recall, item_distract = get_list_items(
+                item_index, study, recall, i, param_def.options['scope']
+            )
+            n_item = len(item_study)
+            n_recall = len(item_recall)
+
             # access the dynamic parameters needed for this list
             list_param = param.copy()
             list_param = param_def.get_dynamic(list_param, i)
             list_param = param_def.eval_dependent(list_param)
-            list_param = prepare_list_param(n_item, n_sub, list_param, param_def)
+            list_param = prepare_list_param(
+                n_item, n_sub, list_param, param_def, n_recall
+            )
 
             # initialize the network
             net = init_network(
@@ -945,9 +957,6 @@ class CMR(Recall):
             net.update(('task', 'start', 0), net.c_sublayers)
 
             # record study phase
-            item_pool, item_study, item_recall, item_distract = get_list_items(
-                item_index, study, recall, i, param_def.options['scope']
-            )
             if param_def.options['distraction']:
                 distract_segment = ('task', 'distract')
                 distract_B = list_param['B_distract']
