@@ -402,6 +402,16 @@ class CMRParameters(Parameters):
             else:
                 eval_param[par] = np.array(values)
         return eval_param
+    
+    def expand_param(self, param, names, n_item=1, n_sub=1):
+        """Expand parameters to a specified size."""
+        expanded = param.copy()
+        size = (n_item, n_sub)
+        for name in names:
+            if name not in param:
+                continue
+            expanded[name] = network.expand_param(param[name], size)
+        return expanded
 
 
 def primacy(n_item, L, P1, P2):
