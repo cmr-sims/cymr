@@ -28,9 +28,10 @@ def expand_param(param, size):
     if not isinstance(param, np.ndarray):
         # expand scalar to full array
         param = np.tile(param, size).astype(float)
-    elif size.shape and param.ndim < len(size):
-        # expand array to have to correct number of dimensions
-        param = np.expand_dims(param, axis=1)
+    elif size.shape:
+        if param.ndim < len(size):
+            # expand array to have to correct number of dimensions
+            param = np.expand_dims(param, axis=1)
         if param.shape != tuple(size):
             # expand singleton dimensions as needed
             rep = np.ones(size.shape, dtype=int)
