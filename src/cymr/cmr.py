@@ -643,7 +643,7 @@ def study_list(param_def, param, item_index, item_input, patterns, item_distract
     return net
 
 
-def prepare_list_param(n_item, n_sub, param, param_def):
+def prepare_list_param(n_item, n_sub, param, param_def, n_recall=None):
     """
     Prepare parameters that vary within list.
 
@@ -651,7 +651,7 @@ def prepare_list_param(n_item, n_sub, param, param_def):
     ----------
     n_item : int
         Number of items in the list.
-
+    
     n_sub : int
         Number of sublayers of context.
 
@@ -661,6 +661,9 @@ def prepare_list_param(n_item, n_sub, param, param_def):
     param_def : cymr.cmr.CMRParameters
         Parameter definitions indicating sublayer parameters.
 
+    n_recall : int
+        Number of recalls in the list.
+
     Returns
     -------
     list_param : dict
@@ -668,40 +671,23 @@ def prepare_list_param(n_item, n_sub, param, param_def):
     """
     if 'c' in param_def.sublayer_param:
         # evaluate sublayer parameters
-        param = param_def.eval_sublayer_param('c', param, n_item)
-        scalar_param = ['B_start']
-        for par in scalar_param:
-            p = param[par]
-            if isinstance(p, np.ndarray) and p.shape[0] > 1:
-                # if there is a value for each item, use the last one
-                param[par] = p[-1]
-
-        # get the set of all sublayer parameters
-        sub_param = set()
-        for sublayer in param_def.sublayers['c']:
-            for par in param_def.sublayer_param['c'][sublayer].keys():
-                sub_param.add(par)
+        eval_param = param_def.eval_sublayer_param('c', param, n_trial=1)
     else:
-        sub_param = set()
+        eval_param = param
 
-    if 'Lfc' in sub_param:
-        Lfc = param['Lfc']
-    else:
-        Lfc = np.tile(param['Lfc'], (n_item, n_sub)).astype(float)
+    # expand trial-specific parameters
+    item_params = ['Lfc', 'Lcf', 'B_enc', 'B_distract']
+    list_param = param_def.expand_param(eval_param, item_params, n_item, n_sub)
+    if n_recall is not None:
+        list_param = param_def.expand_param(list_param, ['B_rec'], n_recall, n_sub)
 
     # apply primacy gradient to Lcf
-    if 'Lcf' in sub_param:
-        n_sub = param['Lcf'].shape[1]
-        Lcf = np.zeros(param['Lcf'].shape)
-        for i in range(n_sub):
-            Lcf[:, i] = primacy(n_item, param['Lcf'][0, i], param['P1'], param['P2'])
-    else:
-        Lcf_trial = primacy(n_item, param['Lcf'], param['P1'], param['P2'])
-        Lcf = np.tile(Lcf_trial[:, None], (1, n_sub))
+    list_param['Lcf'] = primacy(
+        n_item, list_param['Lcf'], eval_param['P1'], eval_param['P2']
+    )
 
-    p_stop = p_stop_op(n_item, param['X1'], param['X2'])
-    list_param = param.copy()
-    list_param.update({'Lfc': Lfc, 'Lcf': Lcf, 'p_stop': p_stop})
+    # determine P(stop) by output position
+    list_param['p_stop'] = p_stop_op(n_item, param['X1'], param['X2'])
     return list_param
 
 
