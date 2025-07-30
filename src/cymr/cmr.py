@@ -338,7 +338,11 @@ class CMRParameters(Parameters):
             self.sublayer_param[layer] = {sublayer: dict(*args, **kwargs)}
 
     def eval_sublayer_param(
-        self, layer: str, param: dict[str, Any], n_trial: int = None
+        self, 
+        layer: str, 
+        param: dict[str, Any], 
+        n_trial: int = None,
+        sublayer_params: list[str] = None, 
     ) -> dict[str, Union[float, ArrayLike]]:
         """
         Evaluate sublayer parameters.
@@ -355,6 +359,10 @@ class CMRParameters(Parameters):
             Number of trials. If indicated, parameters will be tiled
             over all trials.
 
+        sublayer_params : list of str, optional
+            Parameters to evaluate. If not specified, all sublayer
+            parameters will be evaluated.
+
         Returns
         -------
         eval_param : dict
@@ -365,7 +373,15 @@ class CMRParameters(Parameters):
         # get parameter values for each sublayer
         param_lists: dict[str, list[ArrayLike]] = {}
         for sublayer in self.sublayers[layer]:
-            for par, expr in self.sublayer_param[layer][sublayer].items():
+            if sublayer_params is None:
+                names = self.sublayer_param[layer][sublayer].keys()
+            else:
+                names = sublayer_params
+
+            for par in names:
+                if par not in self.sublayer_param[layer][sublayer]:
+                    continue
+                expr = self.sublayer_param[layer][sublayer][par]
                 if par not in param_lists:
                     param_lists[par] = []
                 if isinstance(expr, str):
