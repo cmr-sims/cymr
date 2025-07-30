@@ -639,7 +639,10 @@ def study_list(param_def, param, item_index, item_input, patterns, item_distract
             param['Lfc'],
             param['Lcf'],
         )
-    net.integrate(('task', 'start', 0), net.c_sublayers, param['B_start'])
+    B_start = param['B_start']
+    if isinstance(B_start, np.ndarray) and B_start.ndim == 2:
+        B_start = B_start[0]
+    net.integrate(('task', 'start', 0), net.c_sublayers, B_start)
     return net
 
 
@@ -968,7 +971,10 @@ class CMR(Recall):
                 include=include,
                 exclude=exclude,
             )
-            net.integrate(('task', 'start', 0), net.c_sublayers, list_param['B_start'])
+            B_start = list_param['B_start']
+            if isinstance(B_start, np.ndarray) and B_start.ndim == 2:
+                B_start = B_start[0]
+            net.integrate(('task', 'start', 0), net.c_sublayers, B_start)
 
             # record recall phase
             list_recall_state = net.record_recall(
