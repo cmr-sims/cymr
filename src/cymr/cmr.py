@@ -423,8 +423,9 @@ def primacy(n_item, L, P1, P2):
     n_item : int
         Number of items in study list.
 
-    L : float
+    L : float, numpy.ndarray
         Base learning rate. Asymptote of gradient for later positions.
+        May vary by trial (row) and/or sublayer (column).
 
     P1 : float
         Additional learning for first item.
@@ -435,9 +436,9 @@ def primacy(n_item, L, P1, P2):
     Returns
     -------
     rate : numpy.array
-        Learning rate for each serial position.
+        Learning rate for each serial position (and sublayer).
     """
-    position = np.arange(n_item)
+    position = np.arange(n_item)[:, np.newaxis]
     rate = L + (P1 * np.exp(-P2 * position))
     return rate
 
