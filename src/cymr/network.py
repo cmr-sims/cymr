@@ -886,7 +886,6 @@ class Network(object):
         B,
         T,
         amin=0.000001,
-        amax=10e10,
         include=None,
         exclude=None,
     ):
@@ -913,10 +912,6 @@ class Network(object):
 
         amin : float, optional
             Minimum activation for each not-yet-recalled item on each
-            recall attempt.
-
-        amax : float, optional
-            Maximum activation for each not-yet-recalled item on each
             recall attempt.
 
         include : list of str, optional
@@ -957,7 +952,7 @@ class Network(object):
                 i,
             )
             operations.apply_softmax(
-                f_ind[0], n_item, self.f_in, exclude_items, amin, amax, param['T']
+                f_ind[0], n_item, self.f_in, exclude_items, amin, param['T']
             )
 
             # update the item layer
@@ -1046,7 +1041,6 @@ class Network(object):
         T,
         p_stop,
         amin=0.000001,
-        amax=10e10,
         filter_recalls=False,
         A1=None,
         A2=None,
@@ -1073,10 +1067,6 @@ class Network(object):
 
         amin : float, optional
             Minimum activation of each not-yet-recalled item on each
-            recall attempt.
-
-        amax : float, optional
-            Maximum activation for each not-yet-recalled item on each
             recall attempt.
 
         filter_recalls : bool, optional
@@ -1127,7 +1117,7 @@ class Network(object):
                 i,
             )
             operations.apply_softmax(
-                rec_ind[0], n_item, self.f_in, exclude, amin, amax, param['T']
+                rec_ind[0], n_item, self.f_in, exclude, amin, param['T']
             )
 
             # select item for recall proportionate to support

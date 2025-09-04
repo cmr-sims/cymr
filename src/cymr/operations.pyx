@@ -414,7 +414,7 @@ cpdef cue_item(
 
 
 cpdef apply_softmax(
-    int n, int n_f, double [:] f_in, int [:] exclude, double amin, double amax, double T
+    int n, int n_f, double [:] f_in, int [:] exclude, double amin, double T
 ):
     """
     Apply softmax rule to item activation.
@@ -436,9 +436,6 @@ cpdef apply_softmax(
     amin
         Minimum item activation for non-excluded items.
     
-    amax
-        Maximum item activation for non-excluded items.
-    
     T
         Temperature parameter of the softmax function.
     """
@@ -450,8 +447,6 @@ cpdef apply_softmax(
         # ensure minimal support for each item
         if f_in[n + i] < amin:
             f_in[n + i] = amin
-        elif f_in[n + i] > amax:
-            f_in[n + i] = amax
 
         # apply softmax
         f_in[n + i] = exp((2 * f_in[n + i]) / T)
@@ -502,7 +497,6 @@ def p_recall(
     int [:, :] c_ind,
     int [:] exclude,
     double amin,
-    double amax,
     double [:, :] B,
     double T,
     const double [:] p_stop,
@@ -561,9 +555,6 @@ def p_recall(
     amin
         Minimum item activation for non-excluded items.
 
-    amax
-        Maximum item activation for non-excluded items.
-
     B
         :math:`\\beta` parameter.
 
@@ -596,7 +587,7 @@ def p_recall(
             recalls,
             i,
         )
-        apply_softmax(start, n_f, f_in, exclude, amin, amax, T)
+        apply_softmax(start, n_f, f_in, exclude, amin, T)
 
         total = 0
         for j in range(n_f):
@@ -629,7 +620,6 @@ def p_recall_match(
     int [:, :] c_ind,
     int [:] exclude,
     double amin,
-    double amax,
     double [:, :] B,
     double T,
     const double [:] p_stop,
@@ -691,9 +681,6 @@ def p_recall_match(
     amin
         Minimum item activation for non-excluded items.
 
-    amax
-        Maximum item activation for non-excluded items.
-
     B
         :math:`\\beta` parameter.
 
@@ -737,7 +724,7 @@ def p_recall_match(
             recalls,
             i,
         )
-        apply_softmax(start, n_f, f_in, exclude, amin, amax, T)
+        apply_softmax(start, n_f, f_in, exclude, amin, T)
 
         total = 0
         for j in range(n_f):
