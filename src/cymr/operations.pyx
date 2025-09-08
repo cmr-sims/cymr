@@ -1,7 +1,7 @@
 # cython: language_level=3, profile=False, boundscheck=False, wraparound=False, embedsignature=True
 
 cimport cython
-from libc.math cimport sqrt, exp
+from libc.math cimport sqrt, exp, INFINITY
 
 
 @cython.profile(False)
@@ -440,6 +440,7 @@ cpdef apply_softmax(
         Temperature parameter of the softmax function.
     """
     cdef int i
+    cdef double fmax = -INFINITY
     for i in range(n_f):
         if exclude[i]:
             continue
@@ -448,8 +449,16 @@ cpdef apply_softmax(
         if f_in[n + i] < amin:
             f_in[n + i] = amin
 
-        # apply softmax
-        f_in[n + i] = exp((2 * f_in[n + i]) / T)
+        # get maximum value over f
+        if f_in[n + 1] > fmax:
+            fmax = f_in[n + 1]
+
+    for i in range(n_f):
+        if exclude[i]:
+            continue
+
+        # apply softmax, with max subtracted for stability
+        f_in[n + i] = exp((2 * (f_in[n + i] - fmax)) / T)
 
 
 cpdef item_match(
