@@ -85,6 +85,12 @@ def sample_response_lba(A, b, v, s, tau):
     return int(response), rt
 
 
+def robust_normalize(x):
+    """Normalize without overflow errors."""
+    scaled = x / np.max(x)
+    return scaled / np.sum(scaled)
+
+
 def init_plot(**kwargs):
     fig = plt.figure(constrained_layout=True, **kwargs)
     gs = GridSpec(20, 10, figure=fig)
@@ -1122,7 +1128,7 @@ class Network(object):
 
             # select item for recall proportionate to support
             support = self.f_in[rec_ind[0] : rec_ind[1]]
-            p_recall = support / np.sum(support)
+            p_recall = robust_normalize(support)
 
             if filter_recalls:
                 # acceptance probability based on context match
